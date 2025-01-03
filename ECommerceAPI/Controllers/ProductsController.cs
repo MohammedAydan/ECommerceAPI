@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ECommerceAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class ProductsController : ControllerBase
     {
@@ -18,9 +18,21 @@ namespace ECommerceAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProducts()
+        public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProducts(
+            [FromQuery] int? page = 1,
+            [FromQuery] int? limit = 10)
         {
-            var products = await _productService.GetAllProductsAsync();
+            var products = await _productService.GetAllProductsAsync(page, limit);
+            return Ok(products);
+        }
+
+        [HttpGet("category/{id}")]
+        public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProductsByCategoryId(
+            string id,
+            [FromQuery] int? page = 1,
+            [FromQuery] int? limit = 10)
+        {
+            var products = await _productService.GetAllProductsByCategoryIdAsync(id, page, limit);
             return Ok(products);
         }
 

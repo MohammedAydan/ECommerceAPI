@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ECommerceAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class OrdersController : ControllerBase
     {
@@ -18,16 +18,19 @@ namespace ECommerceAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetOrders()
+        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetOrders([FromQuery] int? page = 1,[FromQuery] int? limit = 10)
         {
-            var orders = await _orderService.GetAllOrdersAsync();
+            var orders = await _orderService.GetAllOrdersAsync(page, limit);
             return Ok(orders);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<OrderDTO>> GetOrder(int id)
+        public async Task<ActionResult<OrderDTO>> GetOrder(int id,
+            [FromQuery] bool getMyItemsAndProducts = false, 
+            [FromQuery] int? page = 1, 
+            [FromQuery] int? limit = 10)
         {
-            var order = await _orderService.GetOrderByIdAsync(id);
+            var order = await _orderService.GetOrderByIdAsync(id, getMyItemsAndProducts, page, limit);
             if (order == null)
             {
                 return NotFound();

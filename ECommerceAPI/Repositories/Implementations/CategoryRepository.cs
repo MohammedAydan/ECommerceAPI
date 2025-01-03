@@ -3,6 +3,7 @@ using ECommerceAPI.Model.Entities;
 using ECommerceAPI.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ECommerceAPI.Repositories.Implementations
@@ -16,21 +17,39 @@ namespace ECommerceAPI.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<IEnumerable<Category>> GetAllCategoriesAsync()
+        public async Task<IEnumerable<Category>> GetAllCategoriesAsync(int? page = 1, int? limit = 10)
         {
+            page = page.HasValue && page.Value > 0 ? page.Value : 1;
+            limit = limit.HasValue && limit.Value > 0 ? limit.Value : 10;
+
             return await _context.Categories
-                .Include(c => c.SubCategories)
-                .Include(c => c.Products)
+                .Skip((page.Value - 1) * limit.Value)
+                .Take(limit.Value)
                 .ToListAsync();
         }
 
-        public async Task<Category> GetCategoryByIdAsync(int id)
+        public async Task<Category?> GetCategoryByIdAsync(int id, bool? getMyProducts = false, int? page = 1, int? limit = 10)
         {
-            return await _context.Categories
-                .Include(c => c.SubCategories)
-                .Include(c => c.Products)
-                .FirstOrDefaultAsync(c => c.CategoryId == id);
+            page = page.HasValue && page.Value > 0 ? page.Value : 1;
+            limit = limit.HasValue && limit.Value > 0 ? limit.Value : 10;
+
+            if (getMyProducts == true)
+            {
+                return await _context.Categories
+                    .Include(c => c.SubCategories)
+                    .Include(c => c.Products)
+                    .Skip((page.Value - 1) * limit.Value)
+                    .Take(limit.Value)
+                    .FirstOrDefaultAsync(c => c.CategoryId == id);
+            }
+            else
+            {
+                return await _context.Categories
+                    .FirstOrDefaultAsync(c => c.CategoryId == id);
+            }
         }
+
+
 
         public async Task AddCategoryAsync(Category category)
         {

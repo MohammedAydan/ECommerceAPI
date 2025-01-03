@@ -29,5 +29,10 @@ namespace ECommerceAPI.Services.Implementations
         {
             return await _userRepository.SignUpAsync(signUp);
         }
+
+        public async Task<AuthResponseDto> RefreshToken(string refreshToken) 
+        {
+            return await _userRepository.RefreshToken(refreshToken);
+        }
     }
 }

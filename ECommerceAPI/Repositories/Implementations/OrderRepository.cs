@@ -16,20 +16,32 @@ namespace ECommerceAPI.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<IEnumerable<Order>> GetAllOrdersAsync()
+        public async Task<IEnumerable<Order>> GetAllOrdersAsync(int? page = 1, int? limit = 10)
         {
             return await _context.Orders
-                .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
+                .Skip((page!.Value - 1) * (limit ?? 10))
+                .Take(limit ?? 10)
+                //.Include(o => o.OrderItems)
+                //.ThenInclude(oi => oi.Product)
                 .ToListAsync();
         }
 
-        public async Task<Order> GetOrderByIdAsync(int id)
+        public async Task<Order> GetOrderByIdAsync(int id, bool getMyItemsAndProducts = false, int? page = 1, int? limit = 10)
         {
-            return await _context.Orders
-                .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
-                .FirstOrDefaultAsync(o => o.OrderId == id);
+            if(getMyItemsAndProducts == true) 
+            {
+                return await _context.Orders
+                    .Include(
+                        o => o.OrderItems.Skip((page!.Value - 1) * (limit ?? 10)).Take(limit ?? 10)
+                    )
+                    .ThenInclude(oi => oi.Product)
+                    .FirstOrDefaultAsync(o => o.OrderId == id);
+            } 
+            else
+            {
+                return await _context.Orders
+                    .FirstOrDefaultAsync(o => o.OrderId == id);
+            }
         }
 
         public async Task AddOrderAsync(Order order)

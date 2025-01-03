@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ECommerceAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -18,7 +18,7 @@ namespace ECommerceAPI.Controllers
         }
 
         [Authorize]
-        [HttpGet("/{id}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(string id)
         {
             try
@@ -33,11 +33,12 @@ namespace ECommerceAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(e);
+                return BadRequest(e.Message);
             }
         }
 
-        [HttpPost("/signIn")]
+        // SignIn user
+        [HttpPost("signIn")]
         public async Task<IActionResult> SignIn([FromBody] SignInDto signIn)
         {
             try
@@ -52,11 +53,11 @@ namespace ECommerceAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(e);
+                return BadRequest(e.Message);
             }
         }
 
-        [HttpPost("/signUp")]
+        [HttpPost("signUp")]
         public async Task<IActionResult> SignUp([FromBody] SignUpDto signUp)
         {
             try
@@ -71,7 +72,26 @@ namespace ECommerceAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(e);
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto refreshToken)
+        {
+            try
+            {
+                var res = await _userService.RefreshToken(refreshToken.RefreshToken);
+                if (res == null)
+                {
+                    return Unauthorized("Unauthorized");
+                }
+
+                return Ok(res);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
             }
         }
     }

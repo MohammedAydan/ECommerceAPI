@@ -1,12 +1,17 @@
 using ECommerceAPI.Data;
 using ECommerceAPI.Helpers;
+using ECommerceAPI.Middlewares;
 using ECommerceAPI.Model.Entities;
 using ECommerceAPI.Repositories.Implementations;
 using ECommerceAPI.Repositories.Interfaces;
 using ECommerceAPI.Services.Implementations;
 using ECommerceAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +49,28 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICartService, CartService>();
 
 builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddSingleton<ApiKeyMiddleware>();
+builder.Services.AddSingleton<TokenHelper>();
+
+var jwtSettings = builder.Configuration.GetSection("JWT");
+builder.Services.AddAuthentication(op =>
+{
+    op.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    op.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(op =>
+{
+    op.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]??"")),
+    };
+});
+
 
 var app = builder.Build();
 
@@ -60,6 +87,11 @@ if (app.Environment.IsDevelopment())
         await seedHelper.SeedAsync();
     }
 }
+else
+{
+    app.UseMiddleware<ApiKeyMiddleware>();
+}
+
 
 app.UseHttpsRedirection();
 

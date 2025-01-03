@@ -10,5 +10,6 @@
         public string SKU { get; set; }
         public int StockQuantity { get; set; }
         public string ImageUrl { get; set; }
+        public CategoryDTO Category { get; set; }
     }
 }

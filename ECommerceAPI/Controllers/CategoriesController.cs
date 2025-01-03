@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ECommerceAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class CategoriesController : ControllerBase
     {
@@ -18,16 +18,19 @@ namespace ECommerceAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategories()
+        public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategories([FromQuery] int? page = 1, [FromQuery] int? limit = 10)
         {
-            var categories = await _categoryService.GetAllCategoriesAsync();
+            var categories = await _categoryService.GetAllCategoriesAsync(page, limit);
             return Ok(categories);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<CategoryDTO>> GetCategory(int id)
+        public async Task<ActionResult<CategoryDTO>> GetCategory(int id, 
+            [FromQuery] bool? getMyProducts = false, 
+            [FromQuery] int? page = 1, 
+            [FromQuery] int? limit = 10)
         {
-            var category = await _categoryService.GetCategoryByIdAsync(id);
+            var category = await _categoryService.GetCategoryByIdAsync(id, getMyProducts, page, limit);
             if (category == null)
             {
                 return NotFound();

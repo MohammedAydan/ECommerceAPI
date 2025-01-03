@@ -3,6 +3,7 @@ using ECommerceAPI.Model.Entities;
 using ECommerceAPI.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ECommerceAPI.Repositories.Implementations
@@ -16,12 +17,33 @@ namespace ECommerceAPI.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<IEnumerable<Product>> GetAllProductsAsync()
+        public async Task<IEnumerable<Product>> GetAllProductsAsync(int? page = 1, int? limit = 10)
         {
-            return await _context.Products
-                .Include(p => p.Category)
-                .ToListAsync();
+            return await GetPaginatedProducts(page, limit);
         }
+
+        public async Task<IEnumerable<Product>> GetAllProductsByCategoryIdAsync(string categoryId, int? page = 1, int? limit = 10)
+        {
+            return await GetPaginatedProducts(page, limit, categoryId);
+        }
+
+        private async Task<IEnumerable<Product>> GetPaginatedProducts(int? page, int? limit, string? categoryId = null)
+        {
+            var query = _context.Products.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(categoryId))
+            {
+                query = query.Where(p => p.CategoryId.ToString() == categoryId);
+            }
+
+            if (page.HasValue && page.Value > 0)
+            {
+                query = query.Skip((page.Value - 1) * (limit ?? 10)).Take(limit ?? 10);
+            }
+
+            return await query.Include(p => p.Category).ToListAsync();
+        }
+
 
         public async Task<Product> GetProductByIdAsync(int id)
         {

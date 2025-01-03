@@ -20,15 +20,15 @@ namespace ECommerceAPI.Services.Implementations
             _mapper = mapper;
         }
 
-        public async Task<IEnumerable<CategoryDTO>> GetAllCategoriesAsync()
+        public async Task<IEnumerable<CategoryDTO>> GetAllCategoriesAsync(int? page = 1, int? limit = 10)
         {
-            var categories = await _categoryRepository.GetAllCategoriesAsync();
+            var categories = await _categoryRepository.GetAllCategoriesAsync(page, limit);
             return _mapper.Map<IEnumerable<CategoryDTO>>(categories);
         }
 
-        public async Task<CategoryDTO> GetCategoryByIdAsync(int id)
+        public async Task<CategoryDTO> GetCategoryByIdAsync(int id, bool? getMyProducts = false, int? page = 1, int? limit = 10)
         {
-            var category = await _categoryRepository.GetCategoryByIdAsync(id);
+            var category = await _categoryRepository.GetCategoryByIdAsync(id, getMyProducts, page, limit);
             return _mapper.Map<CategoryDTO>(category);
         }
 
