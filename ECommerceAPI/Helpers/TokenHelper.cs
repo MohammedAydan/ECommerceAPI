@@ -35,8 +35,8 @@ namespace ECommerceAPI.Helpers
                 issuer: _configuration["JWT:Issuer"],
                 audience: _configuration["JWT:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JWT:expir"]??"60")),
-                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]??"")), SecurityAlgorithms.HmacSha256)
+                expires: DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JWT:Expir"] ??"60")),
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"] ??"")), SecurityAlgorithms.HmacSha256)
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);

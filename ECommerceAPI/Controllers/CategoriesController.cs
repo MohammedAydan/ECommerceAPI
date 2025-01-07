@@ -1,11 +1,13 @@
 ﻿using ECommerceAPI.Model.DTOs;
 using ECommerceAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ECommerceAPI.Controllers
 {
+    [Authorize(Roles = "Admin")]
     [Route("api/v1/[controller]")]
     [ApiController]
     public class CategoriesController : ControllerBase
@@ -17,6 +19,7 @@ namespace ECommerceAPI.Controllers
             _categoryService = categoryService;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategories([FromQuery] int? page = 1, [FromQuery] int? limit = 10)
         {
@@ -24,6 +27,7 @@ namespace ECommerceAPI.Controllers
             return Ok(categories);
         }
 
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<ActionResult<CategoryDTO>> GetCategory(int id, 
             [FromQuery] bool? getMyProducts = false, 

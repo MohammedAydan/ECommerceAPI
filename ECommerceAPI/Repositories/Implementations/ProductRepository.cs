@@ -41,14 +41,16 @@ namespace ECommerceAPI.Repositories.Implementations
                 query = query.Skip((page.Value - 1) * (limit ?? 10)).Take(limit ?? 10);
             }
 
-            return await query.Include(p => p.Category).ToListAsync();
+            return await query
+                //.Include(p => p.Category)
+                .ToListAsync();
         }
 
 
         public async Task<Product> GetProductByIdAsync(int id)
         {
             return await _context.Products
-                .Include(p => p.Category)
+                //.Include(p => p.Category)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
         }
 

@@ -33,6 +33,11 @@ namespace ECommerceAPI.Repositories.Implementations
             return await _context.Users.FindAsync(id);
         }
 
+        public async Task<IEnumerable<string>> GetUserRolesAsync(UserModel user)
+        {
+            return await _userManager.GetRolesAsync(user);
+        }
+
         public async Task<AuthResponseDto> SignInAsync(SignInDto signIn)
         {
             if (signIn == null || signIn.IsEmpty())

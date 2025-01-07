@@ -1,4 +1,4 @@
-using ECommerceAPI.Data;
+﻿using ECommerceAPI.Data;
 using ECommerceAPI.Helpers;
 using ECommerceAPI.Middlewares;
 using ECommerceAPI.Model.Entities;
@@ -24,16 +24,16 @@ builder.Services.AddSwaggerGen();
 
 //
 builder.Services.AddDbContext<AppDbContext>(o =>
-    o.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection")??"",
-    new MySqlServerVersion(new Version(8,0,33))
+    o.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection") ?? "",
+    new MySqlServerVersion(new Version(8, 0, 33))
 ));
 
 builder.Services.AddIdentity<UserModel, RoleModel>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddScoped<IUserRepository,UserRepository>();
-builder.Services.AddScoped<IUserService,UserService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<SeedHelper>();
 
 // Register repositories
@@ -47,6 +47,7 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICartService, CartService>();
+
 
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddSingleton<ApiKeyMiddleware>();
@@ -67,9 +68,25 @@ builder.Services.AddAuthentication(op =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]??"")),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? "")),
+        RequireExpirationTime = true,
     };
 });
+
+
+// إضافة CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+        });
+});
+
+
 
 
 var app = builder.Build();
@@ -89,14 +106,18 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseMiddleware<ApiKeyMiddleware>();
+    //app.UseMiddleware<ApiKeyMiddleware>();
 }
-
+//app.UseMiddleware<ApiKeyMiddleware>();
 
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+//
+app.UseCors();
+//
 
 app.MapControllers();
 

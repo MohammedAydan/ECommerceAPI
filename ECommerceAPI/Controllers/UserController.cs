@@ -3,6 +3,8 @@ using ECommerceAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace ECommerceAPI.Controllers
 {
@@ -18,11 +20,18 @@ namespace ECommerceAPI.Controllers
         }
 
         [Authorize]
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetUser(string id)
+        [HttpGet]
+        public async Task<IActionResult> GetUser()
         {
             try
             {
+                var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (id == null)
+                {
+                    return NotFound("User not found");
+                }
+
                 var user = await _userService.GetUserByIdAsync(id);
                 if (user == null)
                 {
@@ -76,6 +85,7 @@ namespace ECommerceAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto refreshToken)
         {

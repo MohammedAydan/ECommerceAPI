@@ -9,18 +9,16 @@ namespace ECommerceAPI.Model.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int OrderId { get; set; }
-
+        public string Id { get; set; } = Guid.NewGuid().ToString();
         [Required]
-        public string UserId { get; set; } // Assuming you're using Identity for users
-
-        [Required]
-        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
-
+        public string UserId { get; set; }
         [Required]
         [Column(TypeName = "decimal(10, 2)")]
         public decimal TotalAmount { get; set; }
-
+        public string Status { get; set; } = "Pending";
+        public string PaymentMethod { get; set; }
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; }
     }
 }

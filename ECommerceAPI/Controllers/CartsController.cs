@@ -1,10 +1,13 @@
 ﻿using ECommerceAPI.Model.DTOs;
 using ECommerceAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ECommerceAPI.Controllers
 {
+    [Authorize]
     [Route("api/v1/[controller]")]
     [ApiController]
     public class CartsController : ControllerBase
@@ -16,13 +19,19 @@ namespace ECommerceAPI.Controllers
             _cartService = cartService;
         }
 
-        [HttpGet("{userId}")]
-        public async Task<ActionResult<CartDTO>> GetCartByUserId(string userId)
+        [HttpGet]
+        public async Task<ActionResult<CartDTO>> GetCartByUserId()
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if(userId == null)
+            {
+                return NotFound("Not found user or not user auth");
+            }
+
             var cart = await _cartService.GetCartByUserIdAsync(userId);
             if (cart == null)
             {
-                return NotFound();
+                return NotFound("Not found carts or cart items");
             }
             return Ok(cart);
         }

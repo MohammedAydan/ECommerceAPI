@@ -2,6 +2,7 @@
 using ECommerceAPI.Model.Entities;
 using ECommerceAPI.Repositories.Interfaces;
 using ECommerceAPI.Services.Interfaces;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ECommerceAPI.Services.Implementations
 {
@@ -17,7 +18,24 @@ namespace ECommerceAPI.Services.Implementations
         public async Task<UserDto?> GetUserByIdAsync(string id)
         {
             var user = await _userRepository.GetByIdAsync(id);
-            return user == null ? null : UserDto.convertToUserDto(user);
+            if(user == null)
+            {
+                return null;
+            }
+
+            var roles = await this.GetUserRolesAsync(user);
+            if (roles.IsNullOrEmpty())
+            {
+                roles = ["User"];
+            }
+
+            return user == null ? null : UserDto.convertToUserDto(user, roles.ToList());
+        }
+
+        public async Task<IEnumerable<string>> GetUserRolesAsync(UserModel user)
+        {
+            var roles = await _userRepository.GetUserRolesAsync(user);
+            return roles;
         }
 
         public async Task<AuthResponseDto> SignInAsync(SignInDto signIn)
