@@ -15,7 +15,11 @@ namespace ECommerceAPI.Mappings
             CreateMap<OrderItem, OrderItemDTO>().ReverseMap();
             CreateMap<Cart, CartDTO>().ReverseMap();
             CreateMap<CartItem, CartItemDTO>().ReverseMap();
-            CreateMap<OrderItemDTO, CartItemDTO>().ReverseMap();
+
+            CreateMap<CartItemDTO, OrderItemDTO>()
+                .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Product!.Price))
+                .ReverseMap();
+
         }
     }
 }

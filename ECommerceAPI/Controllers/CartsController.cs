@@ -39,6 +39,10 @@ namespace ECommerceAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<CartDTO>> AddCart(CartDTO cartDTO)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            cartDTO.UserId = userId;
             await _cartService.AddCartAsync(cartDTO);
             return CreatedAtAction(nameof(GetCartByUserId), new { userId = cartDTO.UserId }, cartDTO);
         }
@@ -46,6 +50,9 @@ namespace ECommerceAPI.Controllers
         [HttpPut("{cartId}")]
         public async Task<IActionResult> UpdateCart(int cartId, CartDTO cartDTO)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if(userId == null) return Unauthorized();
+
             if (cartId != cartDTO.CartId)
             {
                 return BadRequest();

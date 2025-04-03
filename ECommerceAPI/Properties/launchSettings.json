@@ -8,7 +8,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "http://192.168.1.15:5070"
+      "applicationUrl": "http://localhost:5070"
     },
     "https": {
       "commandName": "Project",
@@ -18,7 +18,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "https://192.168.1.15:7070;http://192.168.1.15:5070"
+      "applicationUrl": "https://my-store.ddns.net;http://localhost:5070"
     },
     "IIS Express": {
       "commandName": "IISExpress",

@@ -52,6 +52,7 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddSingleton<ApiKeyMiddleware>();
 builder.Services.AddSingleton<TokenHelper>();
+builder.Services.AddSingleton<HttpClient>();
 
 var jwtSettings = builder.Configuration.GetSection("JWT");
 builder.Services.AddAuthentication(op =>
@@ -74,7 +75,7 @@ builder.Services.AddAuthentication(op =>
 });
 
 
-// إضافة CORS
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
@@ -85,6 +86,7 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader();
         });
 });
+//
 
 
 
@@ -106,9 +108,8 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    //app.UseMiddleware<ApiKeyMiddleware>();
+    app.UseMiddleware<ApiKeyMiddleware>();
 }
-//app.UseMiddleware<ApiKeyMiddleware>();
 
 app.UseHttpsRedirection();
 
@@ -121,6 +122,5 @@ app.UseCors();
 
 app.MapControllers();
 
-//ProgramTester2.Main();
 app.Run();
 

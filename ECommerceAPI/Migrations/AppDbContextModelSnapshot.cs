@@ -100,40 +100,59 @@ namespace ECommerceAPI.Migrations
 
             modelBuilder.Entity("ECommerceAPI.Model.Entities.Order", b =>
                 {
-                    b.Property<int>("OrderId")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("varchar(255)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("OrderId"));
-
-                    b.Property<DateTime>("OrderDate")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("InvoiceId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("InvoiceKey")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PaymentData")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ReferenceNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(10, 2)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.HasKey("OrderId");
+                    b.HasKey("Id");
 
                     b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("ECommerceAPI.Model.Entities.OrderItem", b =>
                 {
-                    b.Property<int>("OrderItemId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("OrderItemId"));
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("decimal(10, 2)");
+                        .HasColumnType("decimal(65,30)");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -141,7 +160,7 @@ namespace ECommerceAPI.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.HasKey("OrderItemId");
+                    b.HasKey("Id");
 
                     b.HasIndex("OrderId");
 

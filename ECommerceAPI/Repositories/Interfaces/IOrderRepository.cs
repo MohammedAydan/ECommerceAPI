@@ -20,5 +20,7 @@ namespace ECommerceAPI.Repositories.Interfaces
         Task<Order> CreateOrderAsync(Order order);
         Task UpdateOrderAsync(Order order);
         Task DeleteOrderAsync(string id);
+
+        Task<Order> GetOrderByInvoiceIdAsync(string id);
     }
 }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ECommerceAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250102204445_initOrdersTable")]
-    partial class initOrdersTable
+    [Migration("20250107224654_UpdateOrdersTable")]
+    partial class UpdateOrdersTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,49 @@ namespace ECommerceAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+
+            modelBuilder.Entity("ECommerceAPI.Model.Entities.Cart", b =>
+                {
+                    b.Property<int>("CartId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("CartId"));
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("CartId");
+
+                    b.ToTable("Carts");
+                });
+
+            modelBuilder.Entity("ECommerceAPI.Model.Entities.CartItem", b =>
+                {
+                    b.Property<int>("CartItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("CartItemId"));
+
+                    b.Property<int>("CartId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("CartItemId");
+
+                    b.HasIndex("CartId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("CartItem");
+                });
 
             modelBuilder.Entity("ECommerceAPI.Model.Entities.Category", b =>
                 {
@@ -60,40 +103,59 @@ namespace ECommerceAPI.Migrations
 
             modelBuilder.Entity("ECommerceAPI.Model.Entities.Order", b =>
                 {
-                    b.Property<int>("OrderId")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("varchar(255)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("OrderId"));
-
-                    b.Property<DateTime>("OrderDate")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("InvoiceId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("InvoiceKey")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PaymentData")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ReferenceNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(10, 2)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.HasKey("OrderId");
+                    b.HasKey("Id");
 
                     b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("ECommerceAPI.Model.Entities.OrderItem", b =>
                 {
-                    b.Property<int>("OrderItemId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("OrderItemId"));
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("decimal(10, 2)");
+                        .HasColumnType("decimal(65,30)");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -101,7 +163,7 @@ namespace ECommerceAPI.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.HasKey("OrderItemId");
+                    b.HasKey("Id");
 
                     b.HasIndex("OrderId");
 
@@ -157,6 +219,42 @@ namespace ECommerceAPI.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("ECommerceAPI.Model.Entities.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("Expires")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("ECommerceAPI.Model.Entities.RoleModel", b =>
@@ -367,6 +465,25 @@ namespace ECommerceAPI.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ECommerceAPI.Model.Entities.CartItem", b =>
+                {
+                    b.HasOne("ECommerceAPI.Model.Entities.Cart", "Cart")
+                        .WithMany("CartItems")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ECommerceAPI.Model.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cart");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("ECommerceAPI.Model.Entities.Category", b =>
                 {
                     b.HasOne("ECommerceAPI.Model.Entities.Category", "ParentCategory")
@@ -455,6 +572,11 @@ namespace ECommerceAPI.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ECommerceAPI.Model.Entities.Cart", b =>
+                {
+                    b.Navigation("CartItems");
                 });
 
             modelBuilder.Entity("ECommerceAPI.Model.Entities.Category", b =>

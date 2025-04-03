@@ -9,7 +9,7 @@ namespace ECommerceAPI.Model.DTOs
         public int? ParentCategoryId { get; set; }
         public string Description { get; set; }
         //[JsonIgnore]
-        public IEnumerable<CategoryDtoProductDto> Products { get; set; }
+        public virtual IEnumerable<CategoryDtoProductDto>? Products { get; set; }
     }
 
     public class CategoryDtoProductDto

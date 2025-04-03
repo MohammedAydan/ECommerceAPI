@@ -19,7 +19,10 @@ namespace ECommerceAPI.Services.Interfaces
             );
         Task<OrderDTO> GetOrderByIdAsync(string id, bool getMyItemsAndProducts = false, int page = 1, int limit = 10);
         Task<Order> CreateOrderAsync(OrderDTO orderDTO);
-        Task UpdateOrderAsync(OrderDTO orderDTO);
+        Task UpdateOrderAsync(Order order);
+        Task UpdateOrderAsync(OrderDTO orderDto);
         Task DeleteOrderAsync(string id);
+
+        Task<Order> GetOrderByInvoiceIdAsync(string id);
     }
 }

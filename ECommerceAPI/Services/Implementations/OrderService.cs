@@ -50,15 +50,25 @@ namespace ECommerceAPI.Services.Implementations
             return _mapper.Map<OrderDTO>(order);
         }
 
+        public async Task<Order> GetOrderByInvoiceIdAsync(string id)
+        {
+            return await _orderRepository.GetOrderByInvoiceIdAsync(id);
+        }
+
         public async Task<Order> CreateOrderAsync(OrderDTO orderDTO)
         {
             var order = _mapper.Map<Order>(orderDTO);
             return await _orderRepository.CreateOrderAsync(order);
         }
 
-        public async Task UpdateOrderAsync(OrderDTO orderDTO)
+        public async Task UpdateOrderAsync(Order order)
         {
-            var order = _mapper.Map<Order>(orderDTO);
+            await _orderRepository.UpdateOrderAsync(order);
+        }
+
+        public async Task UpdateOrderAsync(OrderDTO orderDto)
+        {
+            var order = _mapper.Map<Order>(orderDto);
             await _orderRepository.UpdateOrderAsync(order);
         }
 

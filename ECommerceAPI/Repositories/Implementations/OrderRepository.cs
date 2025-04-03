@@ -96,6 +96,11 @@ namespace ECommerceAPI.Repositories.Implementations
             return await query.FirstOrDefaultAsync(o => o.Id == id);
         }
 
+        public async Task<Order> GetOrderByInvoiceIdAsync(string id)
+        {
+            return await _context.Orders.FirstOrDefaultAsync(o => o.InvoiceId.Equals(id));
+        }
+
         public async Task<Order> CreateOrderAsync(Order order)
         {
             if (order == null)
@@ -105,17 +110,6 @@ namespace ECommerceAPI.Repositories.Implementations
 
             // Calculate Total Amount
             order.TotalAmount = order.OrderItems.Sum(i => i.Quantity * i.Price);
-            if(order.PaymentMethod == "CashOnDelivery")
-            {
-                order.Status = "Pending";
-            }
-            else
-            {
-                order.Status = "Waiting";
-            }
-
-            // create payment ///
-
             order.CreatedAt = DateTime.UtcNow;
 
             await _context.Orders.AddAsync(order);

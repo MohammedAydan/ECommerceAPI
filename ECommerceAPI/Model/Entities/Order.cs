@@ -18,6 +18,13 @@ namespace ECommerceAPI.Model.Entities
         public string Status { get; set; } = "Pending";
         public string PaymentMethod { get; set; }
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public UserModel? User { get; set; }
+
+        public string? InvoiceId { get; set; }
+        public string? InvoiceKey { get; set; }
+        public string? ReferenceNumber { get; set; }
+        public string? PaymentData { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; }
     }
