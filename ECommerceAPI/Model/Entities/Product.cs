@@ -30,10 +30,15 @@ namespace ECommerceAPI.Model.Entities
         public string SKU { get; set; }
 
         public int StockQuantity { get; set; } = 0;
-
+        [NotMapped]
+        public virtual IFormFile? Image { get; set; }
         [StringLength(255)]
-        public string ImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
 
+        public int? discount { get; set; } = 0;
+        public int? rating { get; set; } = 1;
+        public int? CartAddedCount { get; set; } = 0;
+        public int? CreatedOrderCount { get; set; } = 0;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

@@ -40,5 +40,15 @@ namespace ECommerceAPI.Services.Implementations
         {
             await _cartRepository.DeleteCartAsync(cartId);
         }
+
+        public async Task AddToCartAsync(string userId, int productId)
+        {
+            await _cartRepository.AddToCartAsync(userId, productId);
+        }
+
+        public async Task RemoveFromCartAsync(string userId, int productId, bool removeAll = false)
+        {
+            await _cartRepository.RemoveFromCartAsync(userId, productId, removeAll);
+        }
     }
 }

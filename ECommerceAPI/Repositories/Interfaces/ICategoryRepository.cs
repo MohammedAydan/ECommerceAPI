@@ -1,4 +1,5 @@
-﻿using ECommerceAPI.Model.Entities;
+﻿using ECommerceAPI.Model.DTOs;
+using ECommerceAPI.Model.Entities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -11,5 +12,7 @@ namespace ECommerceAPI.Repositories.Interfaces
         Task AddCategoryAsync(Category category);
         Task UpdateCategoryAsync(Category category);
         Task DeleteCategoryAsync(int id);
+
+        Task<IEnumerable<Category>> GetTopCategoriesAsync(int? page = 1, int? limit = 10);
     }
 }

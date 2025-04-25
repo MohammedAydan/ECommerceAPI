@@ -4,6 +4,7 @@ using ECommerceAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ECommerceAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250424104047_AddImageUrlToCategory")]
+    partial class AddImageUrlToCategory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -73,9 +76,6 @@ namespace ECommerceAPI.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("CategoryId"));
 
-                    b.Property<int?>("CategoryId1")
-                        .HasColumnType("int");
-
                     b.Property<string>("CategoryName")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -91,7 +91,7 @@ namespace ECommerceAPI.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("longtext");
 
-                    b.Property<int>("ItemsCount")
+                    b.Property<int?>("ParentCategoryId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -99,7 +99,7 @@ namespace ECommerceAPI.Migrations
 
                     b.HasKey("CategoryId");
 
-                    b.HasIndex("CategoryId1");
+                    b.HasIndex("ParentCategoryId");
 
                     b.ToTable("Categories");
                 });
@@ -127,9 +127,6 @@ namespace ECommerceAPI.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("ReferenceNumber")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ShippingAddress")
                         .HasColumnType("longtext");
 
                     b.Property<string>("Status")
@@ -188,17 +185,11 @@ namespace ECommerceAPI.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ProductId"));
 
-                    b.Property<int?>("CartAddedCount")
-                        .HasColumnType("int");
-
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<int?>("CreatedOrderCount")
-                        .HasColumnType("int");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -226,12 +217,6 @@ namespace ECommerceAPI.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<int?>("discount")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("rating")
-                        .HasColumnType("int");
 
                     b.HasKey("ProductId");
 
@@ -332,9 +317,6 @@ namespace ECommerceAPI.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("longtext");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("tinyint(1)");
@@ -508,9 +490,11 @@ namespace ECommerceAPI.Migrations
 
             modelBuilder.Entity("ECommerceAPI.Model.Entities.Category", b =>
                 {
-                    b.HasOne("ECommerceAPI.Model.Entities.Category", null)
+                    b.HasOne("ECommerceAPI.Model.Entities.Category", "ParentCategory")
                         .WithMany("SubCategories")
-                        .HasForeignKey("CategoryId1");
+                        .HasForeignKey("ParentCategoryId");
+
+                    b.Navigation("ParentCategory");
                 });
 
             modelBuilder.Entity("ECommerceAPI.Model.Entities.Order", b =>

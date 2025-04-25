@@ -11,5 +11,7 @@ namespace ECommerceAPI.Services.Interfaces
         Task AddCategoryAsync(CategoryDTO categoryDTO);
         Task UpdateCategoryAsync(CategoryDTO categoryDTO);
         Task DeleteCategoryAsync(int id);
+
+        Task<IEnumerable<CategoryDTO>> GetTopCategoriesAsync(int? page = 1, int? limit = 10);
     }
 }

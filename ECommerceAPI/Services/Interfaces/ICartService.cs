@@ -9,5 +9,9 @@ namespace ECommerceAPI.Services.Interfaces
         Task AddCartAsync(CartDTO cartDTO);
         Task UpdateCartAsync(CartDTO cartDTO);
         Task DeleteCartAsync(int cartId);
+
+
+        Task AddToCartAsync(string userId, int productId);
+        Task RemoveFromCartAsync(string userId, int productId, bool removeAll = false);
     }
 }

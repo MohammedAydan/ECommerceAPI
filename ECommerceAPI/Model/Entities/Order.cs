@@ -8,16 +8,18 @@ namespace ECommerceAPI.Model.Entities
     public class Order
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public string Id { get; set; } = Guid.NewGuid().ToString();
         [Required]
         public string UserId { get; set; }
         [Required]
         [Column(TypeName = "decimal(10, 2)")]
         public decimal TotalAmount { get; set; }
+        public string? ShippingAddress { get; set; } = string.Empty;
         public string Status { get; set; } = "Pending";
         public string PaymentMethod { get; set; }
-        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public List<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
         public UserModel? User { get; set; }
 
         public string? InvoiceId { get; set; }

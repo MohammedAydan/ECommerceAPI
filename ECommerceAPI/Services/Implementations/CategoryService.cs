@@ -48,5 +48,11 @@ namespace ECommerceAPI.Services.Implementations
         {
             await _categoryRepository.DeleteCategoryAsync(id);
         }
+
+        public async Task<IEnumerable<CategoryDTO>> GetTopCategoriesAsync(int? page = 1, int? limit = 10)
+        {
+            var categories = await _categoryRepository.GetTopCategoriesAsync(page, limit);
+            return _mapper.Map<IEnumerable<CategoryDTO>>(categories);
+        }
     }
 }

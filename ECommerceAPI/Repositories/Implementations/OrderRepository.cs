@@ -1,4 +1,5 @@
 ﻿using ECommerceAPI.Data;
+using ECommerceAPI.Model.DTOs;
 using ECommerceAPI.Model.Entities;
 using ECommerceAPI.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -105,17 +106,70 @@ namespace ECommerceAPI.Repositories.Implementations
         {
             if (order == null)
                 throw new ArgumentNullException(nameof(order));
+
             if (order.OrderItems == null || !order.OrderItems.Any())
                 throw new ArgumentException("Order must contain at least one item.", nameof(order));
 
-            // Calculate Total Amount
+            // Calculate total amount
             order.TotalAmount = order.OrderItems.Sum(i => i.Quantity * i.Price);
             order.CreatedAt = DateTime.UtcNow;
+            order.Status = "Pending";
+
+            // Get distinct product IDs to avoid duplicate tracking
+            var productIds = order.OrderItems
+                .Select(i => i.ProductId)
+                .Distinct()
+                .ToList();
+
+            // Pre-load all products in a single query
+            var existingProducts = await _context.Products
+                .Where(p => productIds.Contains(p.ProductId))
+                .ToDictionaryAsync(p => p.ProductId);
+
+            // Attach products to order items
+            foreach (var item in order.OrderItems)
+            {
+                if (existingProducts.TryGetValue(item.ProductId, out var product))
+                {
+                    item.Product = product;
+                }
+                else
+                {
+                    throw new KeyNotFoundException($"Product with ID {item.ProductId} not found");
+                }
+            }
 
             await _context.Orders.AddAsync(order);
-            await _context.SaveChangesAsync();
 
-            return order;
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+
+                // Update product cart counts - optimized batch update
+                var updateTasks = order.OrderItems
+                    .Select(item => IncrementProductCartCountAsync(item.ProductId))
+                    .ToList();
+
+                await Task.WhenAll(updateTasks);
+
+                await transaction.CommitAsync();
+                return order;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        private async Task IncrementProductCartCountAsync(int productId)
+        {
+           // // Using direct SQL for performance (avoid tracking)
+           // await _context.Database.ExecuteSqlInterpolatedAsync(
+           //     $@"UPDATE Products 
+           //SET CartAddedCount = ISNULL(CartAddedCount, 0) + 1 
+           //WHERE ProductId = {productId}");
         }
 
         public async Task UpdateOrderAsync(Order order)
@@ -138,6 +192,22 @@ namespace ECommerceAPI.Repositories.Implementations
 
             _context.Orders.Remove(order);
             await _context.SaveChangesAsync();
+
+            foreach (var item in order.OrderItems)
+            {
+                await DecrementProductCartCountAsync(item.ProductId);
+            }
+        }
+
+        private async Task DecrementProductCartCountAsync(int productId)
+        {
+            var product = await _context.Products.FindAsync(productId);
+            if (product != null)
+            {
+                product.CartAddedCount = (product.CartAddedCount ?? 0) - 1;
+                _context.Products.Update(product);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

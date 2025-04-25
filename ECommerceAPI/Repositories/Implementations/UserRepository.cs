@@ -16,13 +16,15 @@ namespace ECommerceAPI.Repositories.Implementations
         private readonly UserManager<UserModel> _userManager;
         private readonly TokenHelper _tokenHelper;
         private readonly IConfiguration _configuration;
+        private readonly UploadImagesHelper _imagesHelper;
 
-        public UserRepository(AppDbContext context, UserManager<UserModel> userManager, TokenHelper tokenHelper, IConfiguration configuration)
+        public UserRepository(AppDbContext context, UserManager<UserModel> userManager, TokenHelper tokenHelper, IConfiguration configuration, UploadImagesHelper imagesHelper)
         {
             _context = context;
             _userManager = userManager;
             _tokenHelper = tokenHelper;
             _configuration = configuration;
+            _imagesHelper = imagesHelper;
         }
 
         public async Task<UserModel?> GetByIdAsync(string id)
@@ -57,6 +59,11 @@ namespace ECommerceAPI.Repositories.Implementations
             string accessToken = _tokenHelper.CreateAccessToken(userDto);
             string refreshToken = await createRefreshToken(user.Id);
 
+            if(userDto.ImageUrl is not null) 
+            {
+                userDto.ImageUrl = _imagesHelper.GetImagePath(userDto.ImageUrl!, "users");
+            }
+
             return CreateAuthResponse(200, "Sign-in successful.", userDto,AccessToken: accessToken,RefreshToken: refreshToken);
         }
 
@@ -85,10 +92,23 @@ namespace ECommerceAPI.Repositories.Implementations
                 return CreateAuthResponse(401, "Error signing up user.", errors: result?.Errors.Select(e => e.Description).ToList());
             }
 
+            // upload image
+            if (signUp.Image != null)
+            {
+                var imagePath = await _imagesHelper.UploadImageAsync(signUp.Image, "users");
+                userModel.ImageUrl = imagePath;
+                await _userManager.UpdateAsync(userModel);
+            }
+
             // assign role
             await _userManager.AddToRoleAsync(userModel,"User");
 
             UserDto userDto = UserDto.convertToUserDto(userModel, ["User"]);
+
+            if (userDto.ImageUrl is not null)
+            {
+                userDto.ImageUrl = _imagesHelper.GetImagePath(userDto.ImageUrl!, "users");
+            }
 
             string accessToken = _tokenHelper.CreateAccessToken(userDto);
             string refreshToken = await createRefreshToken(userDto.Id);
@@ -154,6 +174,37 @@ namespace ECommerceAPI.Repositories.Implementations
             await _context.SaveChangesAsync();
 
             return refreshToken;
+        }
+
+        public async Task<UserModel?> UpdateUserAsync(UserModel userModel)
+        {
+            if (userModel == null)
+            {
+                throw new ArgumentNullException(nameof(userModel));
+            }
+            var existingUser = await _context.Users.FindAsync(userModel.Id);
+            if (existingUser == null)
+            {
+                throw new InvalidOperationException("User not found.");
+            }
+            if(userModel.Image is not null)
+            {
+                if(userModel.ImageUrl is not null)
+                {
+                    _imagesHelper.DeleteImage(existingUser.ImageUrl!);
+                }
+                existingUser.ImageUrl = await _imagesHelper.UploadImageAsync(userModel.Image, "users");
+            }
+            existingUser.UserName = userModel.UserName;
+            existingUser.Email = userModel.Email;
+            existingUser.PhoneNumber = userModel.PhoneNumber;
+            existingUser.ImageUrl = userModel.ImageUrl;
+            existingUser.Address = userModel.Address;
+            existingUser.City = userModel.City;
+            existingUser.Country = userModel.Country;
+            _context.Users.Update(existingUser);
+            await _context.SaveChangesAsync();
+            return existingUser;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using ECommerceAPI.Model.DTOs;
+using ECommerceAPI.Model.Entities;
 using ECommerceAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -67,7 +68,7 @@ namespace ECommerceAPI.Controllers
         }
 
         [HttpPost("signUp")]
-        public async Task<IActionResult> SignUp([FromBody] SignUpDto signUp)
+        public async Task<IActionResult> SignUp([FromForm] SignUpDto signUp)
         {
             try
             {
@@ -85,7 +86,7 @@ namespace ECommerceAPI.Controllers
             }
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto refreshToken)
         {
@@ -98,6 +99,24 @@ namespace ECommerceAPI.Controllers
                 }
 
                 return Ok(res);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpPut("update")]
+        public async Task<IActionResult> UpdateUser([FromForm] UserModel userModel)
+        {
+            try
+            {
+                var updatedUser = await _userService.UpdateUserAsync(userModel);
+                if (updatedUser == null)
+                {
+                    return NotFound("User not found");
+                }
+                return Ok(updatedUser);
             }
             catch (Exception e)
             {

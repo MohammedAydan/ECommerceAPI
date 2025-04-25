@@ -47,8 +47,13 @@ namespace ECommerceAPI.Services.Implementations
         public async Task<OrderDTO> GetOrderByIdAsync(string id, bool getMyItemsAndProducts = false, int page = 1, int limit = 10)
         {
             var order = await _orderRepository.GetOrderByIdAsync(id, getMyItemsAndProducts, page, limit);
-            return _mapper.Map<OrderDTO>(order);
+            return _mapper.Map<OrderDTO>(order, opt => opt.AfterMap((src, dest) =>
+            {
+                // Custom logic for mapping OrderItems
+                dest.OrderItems = _mapper.Map<List<OrderItemDTO>>(dest.OrderItems);
+            }));
         }
+
 
         public async Task<Order> GetOrderByInvoiceIdAsync(string id)
         {

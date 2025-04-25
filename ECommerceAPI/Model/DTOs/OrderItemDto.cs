@@ -1,11 +1,14 @@
-﻿namespace ECommerceAPI.Model.DTOs
+﻿using ECommerceAPI.Model.Entities;
+
+namespace ECommerceAPI.Model.DTOs
 {
     public class OrderItemDTO
     {
-        public int OrderItemId { get; set; }
-        public int OrderId { get; set; }
+        public string Id { get; set; }
+        public string OrderId { get; set; }
         public int ProductId { get; set; }
         public int Quantity { get; set; }
-        public decimal Price { get; set; }
+        public double Price { get; set; }
+        public ProductDTO Product { get; set; }
     }
 }

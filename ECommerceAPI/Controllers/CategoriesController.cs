@@ -19,6 +19,15 @@ namespace ECommerceAPI.Controllers
             _categoryService = categoryService;
         }
 
+
+        [AllowAnonymous]
+        [HttpGet("top")]
+        public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetTopCategories([FromQuery] int? page = 1, [FromQuery] int? limit = 10)
+        {
+            var categories = await _categoryService.GetTopCategoriesAsync(page, limit);
+            return Ok(categories);
+        }
+
         [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategories([FromQuery] int? page = 1, [FromQuery] int? limit = 10)
@@ -43,14 +52,15 @@ namespace ECommerceAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<CategoryDTO>> AddCategory(CategoryDTO categoryDTO)
+        public async Task<ActionResult<CategoryDTO>> AddCategory([FromForm] CategoryDTO categoryDTO)
         {
             await _categoryService.AddCategoryAsync(categoryDTO);
-            return CreatedAtAction(nameof(GetCategory), new { id = categoryDTO.CategoryId }, categoryDTO);
+            return Ok(new { success = true });
         }
 
+
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategory(int id, CategoryDTO categoryDTO)
+        public async Task<IActionResult> UpdateCategory(int id,[FromForm] CategoryDTO categoryDTO)
         {
             if (id != categoryDTO.CategoryId)
             {

@@ -13,5 +13,7 @@ namespace ECommerceAPI.Services.Interfaces
         Task AddProductAsync(ProductDTO productDTO);
         Task UpdateProductAsync(ProductDTO productDTO);
         Task DeleteProductAsync(int id);
+
+        Task<IEnumerable<ProductDTO>> GetTopProductsAsync(int? page = 1, int? limit = 10);
     }
 }

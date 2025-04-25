@@ -12,6 +12,8 @@ namespace ECommerceAPI.Model.DTOs
         [EmailAddress]
         public string Email { get; set; }
 
+        public IFormFile? Image { get; set; }
+
         [Required]
         public string Country { get; set; }
 

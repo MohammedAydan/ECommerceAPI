@@ -12,5 +12,7 @@ namespace ECommerceAPI.Repositories.Interfaces
         Task AddProductAsync(Product product);
         Task UpdateProductAsync(Product product);
         Task DeleteProductAsync(int id);
+
+        Task<IEnumerable<Product>> GetTopProductsAsync(int? page = 1, int? limit = 10);
     }
 }

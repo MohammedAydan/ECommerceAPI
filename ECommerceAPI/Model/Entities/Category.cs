@@ -13,12 +13,12 @@ namespace ECommerceAPI.Model.Entities
         [StringLength(255)]
         public string CategoryName { get; set; }
 
-        public int? ParentCategoryId { get; set; }
-
-        [ForeignKey("ParentCategoryId")]
-        public Category ParentCategory { get; set; }
-
         public string Description { get; set; }
+        public int ItemsCount { get; set; } = 0;
+        [NotMapped]
+        public virtual IFormFile? Image { get; set; }
+        public string? ImageUrl { get; set; }
+
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

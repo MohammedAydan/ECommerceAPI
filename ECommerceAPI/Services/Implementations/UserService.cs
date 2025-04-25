@@ -52,5 +52,11 @@ namespace ECommerceAPI.Services.Implementations
         {
             return await _userRepository.RefreshToken(refreshToken);
         }
+
+        public async Task<UserModel?> UpdateUserAsync(UserModel userModel)
+        {
+            return await _userRepository.UpdateUserAsync(userModel);
+        }
+
     }
 }

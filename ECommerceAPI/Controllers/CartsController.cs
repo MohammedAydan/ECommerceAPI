@@ -36,31 +36,27 @@ namespace ECommerceAPI.Controllers
             return Ok(cart);
         }
 
-        [HttpPost]
-        public async Task<ActionResult<CartDTO>> AddCart(CartDTO cartDTO)
+        [HttpPost("add")]
+        public async Task<IActionResult> AddToCart([FromBody] int productId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return Unauthorized();
 
-            cartDTO.UserId = userId;
-            await _cartService.AddCartAsync(cartDTO);
-            return CreatedAtAction(nameof(GetCartByUserId), new { userId = cartDTO.UserId }, cartDTO);
-        }
-
-        [HttpPut("{cartId}")]
-        public async Task<IActionResult> UpdateCart(int cartId, CartDTO cartDTO)
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if(userId == null) return Unauthorized();
-
-            if (cartId != cartDTO.CartId)
-            {
-                return BadRequest();
-            }
-
-            await _cartService.UpdateCartAsync(cartDTO);
+            await _cartService.AddToCartAsync(userId, productId);
             return NoContent();
         }
+
+        [HttpDelete("remove")]
+        public async Task<IActionResult> RmoveFromCart([FromBody] int productId, [FromQuery] bool removeAll = false)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            await _cartService.RemoveFromCartAsync(userId, productId, removeAll);
+            return NoContent();
+        }
+
+
 
         [HttpDelete("{cartId}")]
         public async Task<IActionResult> DeleteCart(int cartId)

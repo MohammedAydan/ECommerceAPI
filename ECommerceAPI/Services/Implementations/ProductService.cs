@@ -19,6 +19,12 @@ namespace ECommerceAPI.Services.Implementations
             _mapper = mapper;
         }
 
+        public async Task<IEnumerable<ProductDTO>> GetTopProductsAsync(int? page = 1, int? limit = 10)
+        {
+            var products = await _productRepository.GetTopProductsAsync(page, limit);
+            return _mapper.Map<IEnumerable<ProductDTO>>(products);
+        }
+
         public async Task<IEnumerable<ProductDTO>> GetAllProductsAsync(int? page = 1, int? limit = 10)
         {
             var products = await _productRepository.GetAllProductsAsync(page, limit);
@@ -54,5 +60,6 @@ namespace ECommerceAPI.Services.Implementations
         {
             await _productRepository.DeleteProductAsync(id);
         }
+
     }
 }

@@ -1,4 +1,5 @@
-﻿using ECommerceAPI.Model.Entities;
+﻿using ECommerceAPI.Helpers;
+using ECommerceAPI.Model.Entities;
 using System.ComponentModel.DataAnnotations;
 
 namespace ECommerceAPI.Model.DTOs
@@ -8,6 +9,7 @@ namespace ECommerceAPI.Model.DTOs
         public string Id { get; set; }
         public string UserName { get; set; }
         public string Email { get; set; }
+        public string? ImageUrl { get; set; }
         public string Country { get; set; }
         public string City { get; set; }
         public string Address { get; set; }
@@ -21,6 +23,7 @@ namespace ECommerceAPI.Model.DTOs
                 Id = user.Id,
                 UserName = user.UserName,
                 Email = user.Email,
+                ImageUrl = user.ImageUrl,
                 Country = user.Country,
                 City = user.City,
                 Address = user.Address,

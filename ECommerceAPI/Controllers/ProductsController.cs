@@ -28,7 +28,17 @@ namespace ECommerceAPI.Controllers
             var products = await _productService.GetAllProductsAsync(page, limit);
             return Ok(products);
         }
-        
+
+        [AllowAnonymous]
+        [HttpGet("top")]
+        public async Task<ActionResult<IEnumerable<ProductDTO>>> GetTopProducts(
+            [FromQuery] int? page = 1,
+            [FromQuery] int? limit = 10)
+        {
+            var products = await _productService.GetTopProductsAsync(page, limit);
+            return Ok(products);
+        }
+
         [AllowAnonymous]
         [HttpGet("category/{id}")]
         public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProductsByCategoryId(
@@ -53,14 +63,14 @@ namespace ECommerceAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ProductDTO>> AddProduct(ProductDTO productDTO)
+        public async Task<ActionResult<ProductDTO>> AddProduct([FromForm] ProductDTO productDTO)
         {
             await _productService.AddProductAsync(productDTO);
-            return CreatedAtAction(nameof(GetProduct), new { id = productDTO.ProductId }, productDTO);
+            return Ok(new { success = true });
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProduct(int id, ProductDTO productDTO)
+        public async Task<IActionResult> UpdateProduct(int id,[FromForm] ProductDTO productDTO)
         {
             if (id != productDTO.ProductId)
             {
