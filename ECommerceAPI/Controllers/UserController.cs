@@ -106,17 +106,39 @@ namespace ECommerceAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateUser([FromForm] UserModel userModel)
+        public async Task<IActionResult> UpdateUser([FromForm] UpdateUserDto updateUserDto)
         {
             try
             {
-                var updatedUser = await _userService.UpdateUserAsync(userModel);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                {
+                    return NotFound("User not found");
+                }
+
+                var updatedUser = await _userService.UpdateUserAsync(userId, updateUserDto);
                 if (updatedUser == null)
                 {
                     return NotFound("User not found");
                 }
                 return Ok(updatedUser);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllUsers([FromQuery] int page = 1, [FromQuery] int limit = 10, string? search = null, string? sortBy = "Id", bool ascending = true, Dictionary<string, string>? filters = null)
+        {
+            try
+            {
+                var users = await _userService.GetAllUsersAsync(page, limit, search, sortBy, ascending, filters);
+                return Ok(users);
             }
             catch (Exception e)
             {

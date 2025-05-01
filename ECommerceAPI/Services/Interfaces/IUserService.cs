@@ -10,6 +10,8 @@ namespace ECommerceAPI.Services.Interfaces
         Task<UserDto?> GetUserByIdAsync(string id);
         Task<IEnumerable<string>> GetUserRolesAsync(UserModel user);
         Task<AuthResponseDto> RefreshToken(string refreshToken);
-        Task<UserModel?> UpdateUserAsync(UserModel userModel);
+        Task<UserDto?> UpdateUserAsync(string userId, UpdateUserDto userModel);
+
+        Task<IEnumerable<UserDto>> GetAllUsersAsync(int? page = 1, int? limit = 10, string? search = null, string? sortBy = "Id", bool ascending = true, Dictionary<string, string>? filters = null);
     }
 }

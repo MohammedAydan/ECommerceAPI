@@ -1,12 +1,12 @@
 ﻿using ECommerceAPI.Data;
+using ECommerceAPI.Helpers;
 using ECommerceAPI.Model.DTOs;
 using ECommerceAPI.Model.Entities;
 using ECommerceAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using System.Threading.Tasks;
-using System.Linq;
-using ECommerceAPI.Helpers;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace ECommerceAPI.Repositories.Implementations
 {
@@ -43,168 +43,237 @@ namespace ECommerceAPI.Repositories.Implementations
         public async Task<AuthResponseDto> SignInAsync(SignInDto signIn)
         {
             if (signIn == null || signIn.IsEmpty())
-            {
-                return CreateAuthResponse(401, "Invalid email or password.");
-            }
+                return CreateAuthResponse(400, "Invalid email or password.");
 
             var user = await _userManager.FindByEmailAsync(signIn.Email);
             if (user == null || !await _userManager.CheckPasswordAsync(user, signIn.Password))
-            {
-                return CreateAuthResponse(401, "Invalid email or password.");
-            }
+                return CreateAuthResponse(400, "Invalid email or password.");
 
-            List<string> roles = (await _userManager.GetRolesAsync(user)).ToList();
+            user.LastSignIn = DateTime.UtcNow;
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            var roles = (await _userManager.GetRolesAsync(user)).ToList();
             var userDto = UserDto.convertToUserDto(user, roles);
 
-            string accessToken = _tokenHelper.CreateAccessToken(userDto);
-            string refreshToken = await createRefreshToken(user.Id);
+            if (userDto.ImageUrl != null)
+                userDto.ImageUrl = _imagesHelper.GetImagePath(userDto.ImageUrl, "users");
 
-            if(userDto.ImageUrl is not null) 
-            {
-                userDto.ImageUrl = _imagesHelper.GetImagePath(userDto.ImageUrl!, "users");
-            }
+            var accessToken = _tokenHelper.CreateAccessToken(userDto);
+            var refreshToken = await CreateRefreshTokenAsync(user.Id);
 
-            return CreateAuthResponse(200, "Sign-in successful.", userDto,AccessToken: accessToken,RefreshToken: refreshToken);
+            return CreateAuthResponse(200, "Sign-in successful.", userDto, accessToken, refreshToken);
         }
 
         public async Task<AuthResponseDto> SignUpAsync(SignUpDto signUp)
         {
             if (signUp == null || signUp.IsEmpty())
-            {
-                return CreateAuthResponse(401, "Invalid data provided.");
-            }
+                return CreateAuthResponse(400, "Invalid data provided.");
 
             if (await _userManager.FindByEmailAsync(signUp.Email) != null)
-            {
-                return CreateAuthResponse(401, "Email already exists.");
-            }
+                return CreateAuthResponse(400, "Email already exists.");
 
             if (await _userManager.FindByNameAsync(signUp.UserName) != null)
-            {
-                return CreateAuthResponse(401, "Username already exists.");
-            }
+                return CreateAuthResponse(400, "Username already exists.");
 
             var userModel = signUp.ConvertToUserModel();
             var result = await _userManager.CreateAsync(userModel, signUp.Password);
 
             if (result == null || !result.Succeeded)
-            {
-                return CreateAuthResponse(401, "Error signing up user.", errors: result?.Errors.Select(e => e.Description).ToList());
-            }
+                return CreateAuthResponse(400, "Failed to create user.", errors: result?.Errors.Select(e => e.Description).ToList());
 
-            // upload image
+            // Upload image if provided
             if (signUp.Image != null)
             {
-                var imagePath = await _imagesHelper.UploadImageAsync(signUp.Image, "users");
-                userModel.ImageUrl = imagePath;
-                await _userManager.UpdateAsync(userModel);
+                userModel.ImageUrl = await _imagesHelper.UploadImageAsync(signUp.Image, "users");
             }
 
-            // assign role
-            await _userManager.AddToRoleAsync(userModel,"User");
+            userModel.CreatedAt = DateTime.UtcNow;
+            userModel.LastSignIn = DateTime.UtcNow;
+            await _userManager.UpdateAsync(userModel);
 
-            UserDto userDto = UserDto.convertToUserDto(userModel, ["User"]);
+            await _userManager.AddToRoleAsync(userModel, "User");
 
-            if (userDto.ImageUrl is not null)
-            {
-                userDto.ImageUrl = _imagesHelper.GetImagePath(userDto.ImageUrl!, "users");
-            }
+            var userDto = UserDto.convertToUserDto(userModel, ["User"]);
+            if (userDto.ImageUrl != null)
+                userDto.ImageUrl = _imagesHelper.GetImagePath(userDto.ImageUrl, "users");
 
-            string accessToken = _tokenHelper.CreateAccessToken(userDto);
-            string refreshToken = await createRefreshToken(userDto.Id);
+            var accessToken = _tokenHelper.CreateAccessToken(userDto);
+            var refreshToken = await CreateRefreshTokenAsync(userDto.Id);
 
-            return CreateAuthResponse(200, "Sign-up successful.",userDto , AccessToken: accessToken, RefreshToken: refreshToken);
+            return CreateAuthResponse(201, "Sign-up successful.", userDto, accessToken, refreshToken);
         }
 
-        public async Task<AuthResponseDto> RefreshToken(string refreshToken) 
+        public async Task<AuthResponseDto> RefreshToken(string refreshToken)
         {
-            var refreshTokenRes = await _context.RefreshTokens
-                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+            var refreshTokenEntity = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == refreshToken);
 
-            if(refreshTokenRes == null || refreshTokenRes.Expires < DateTime.UtcNow || refreshTokenRes.IsUsed || refreshTokenRes.IsRevoked)
-            {
-                return CreateAuthResponse(401, "Invalid Refresh Token",errors: ["Invalid Refresh Token"]);
-            }
+            if (refreshTokenEntity == null || refreshTokenEntity.Expires < DateTime.UtcNow || refreshTokenEntity.IsUsed || refreshTokenEntity.IsRevoked)
+                return CreateAuthResponse(400, "Invalid refresh token.",errors: ["Invalid Refresh Token"]);
 
-            //refreshTokenRes.IsUsed = true;
-            //_context.RefreshTokens.Update(refreshTokenRes);
-
-            _context.RefreshTokens.Remove(refreshTokenRes);
+            // Remove old refresh token (optional: mark as used)
+            _context.RefreshTokens.Remove(refreshTokenEntity);
             await _context.SaveChangesAsync();
 
-            var user = await _userManager.FindByIdAsync(refreshTokenRes.UserId);
+            var user = await _userManager.FindByIdAsync(refreshTokenEntity.UserId);
+            if (user == null)
+                return CreateAuthResponse(404, "User not found.", errors: ["User not found."]);
 
-            if (user == null) 
-            {
-                return CreateAuthResponse(401, "User not found", errors: ["Invalid Refresh Token Or User not found"]);
-            }
+            var userDto = UserDto.convertToUserDto(user);
 
-            UserDto userDto = UserDto.convertToUserDto(user);
+            var newAccessToken = _tokenHelper.CreateAccessToken(userDto);
+            var newRefreshToken = await CreateRefreshTokenAsync(userDto.Id);
 
-            string accessToken = _tokenHelper.CreateAccessToken(userDto);
-            string newRefreshToken = await createRefreshToken(userDto.Id);
-
-            return CreateAuthResponse(200, "Refresh successful.", userDto, AccessToken: accessToken, RefreshToken: newRefreshToken);
+            return CreateAuthResponse(200, "Token refreshed successfully.", userDto, newAccessToken, newRefreshToken);
         }
 
-        private AuthResponseDto CreateAuthResponse(int code, string message, UserDto? user = null, List<string>? errors = null,string? AccessToken = null,string? RefreshToken = null)
+        public async Task<UserModel?> UpdateUserAsync(UserModel userModel)
+        {
+            if (userModel == null)
+                throw new ArgumentNullException(nameof(userModel));
+
+            var existingUser = await _context.Users.FindAsync(userModel.Id);
+            if (existingUser == null)
+                throw new InvalidOperationException("User not found.");
+
+            if (userModel.Image != null)
+            {
+                if (!string.IsNullOrEmpty(existingUser.ImageUrl))
+                    _imagesHelper.DeleteImage(existingUser.ImageUrl);
+
+                existingUser.ImageUrl = await _imagesHelper.UploadImageAsync(userModel.Image, "users");
+            }
+
+            existingUser.UserName = userModel.UserName ?? existingUser.UserName;
+            existingUser.Email = userModel.Email ?? existingUser.Email;
+            existingUser.PhoneNumber = userModel.PhoneNumber ?? existingUser.PhoneNumber;
+            existingUser.Address = userModel.Address ?? existingUser.Address;
+            existingUser.City = userModel.City ?? existingUser.City;
+            existingUser.Country = userModel.Country ?? existingUser.Country;
+            existingUser.UpdatedAt = DateTime.UtcNow;
+
+            _context.Users.Update(existingUser);
+            await _context.SaveChangesAsync();
+
+            return existingUser;
+        }
+
+        // PRIVATE HELPERS
+
+        private AuthResponseDto CreateAuthResponse(int code, string message, UserDto? user = null, string? accessToken = null, string? refreshToken = null, List<string>? errors = null)
         {
             return new AuthResponseDto
             {
                 Code = code,
                 Message = message,
                 User = user,
-                Errors = errors,
-                AccessToken = AccessToken,
-                RefreshToken = RefreshToken
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                Errors = errors
             };
         }
 
-        private async Task<string> createRefreshToken(string userId) 
+        private async Task<string> CreateRefreshTokenAsync(string userId)
         {
-            string refreshToken = _tokenHelper.CreateRefreshToken();
-            await _context.RefreshTokens.AddAsync(new RefreshToken
+            var refreshToken = _tokenHelper.CreateRefreshToken();
+            var expirationMonths = int.Parse(_configuration["JWT:RefreshTokenExpir"] ?? "3");
+
+            var tokenEntity = new RefreshToken
             {
                 Token = refreshToken,
                 UserId = userId,
-                Expires = DateTime.UtcNow.AddMonths(int.Parse(_configuration["JWT:RefreshTokenExpir"]??"3")),
+                Expires = DateTime.UtcNow.AddMonths(expirationMonths),
                 IsRevoked = false,
                 IsUsed = false
-            });
+            };
+
+            await _context.RefreshTokens.AddAsync(tokenEntity);
             await _context.SaveChangesAsync();
 
             return refreshToken;
         }
 
-        public async Task<UserModel?> UpdateUserAsync(UserModel userModel)
+        public async Task<IEnumerable<UserModel>> GetAllUsersAsync(
+            int? page = 1,
+            int? limit = 10,
+            string? search = null,
+            string? sortBy = "Id",
+            bool ascending = true,
+            Dictionary<string, string>? filters = null)
         {
-            if (userModel == null)
+            page = page.HasValue && page.Value > 0 ? page.Value : 1;
+            limit = limit.HasValue && limit.Value > 0 ? limit.Value : 10;
+
+            IQueryable<UserModel> query = _context.Users.AsQueryable();
+
+            // Search (applies to string fields — you can customize which fields to search)
+            if (!string.IsNullOrWhiteSpace(search))
             {
-                throw new ArgumentNullException(nameof(userModel));
+                query = query.Where(u => u.UserName.Contains(search)); // Example: Adjust "UserName" to match your schema
             }
-            var existingUser = await _context.Users.FindAsync(userModel.Id);
-            if (existingUser == null)
+
+            // Apply filters
+            if (filters != null)
             {
-                throw new InvalidOperationException("User not found.");
-            }
-            if(userModel.Image is not null)
-            {
-                if(userModel.ImageUrl is not null)
+                foreach (var filter in filters)
                 {
-                    _imagesHelper.DeleteImage(existingUser.ImageUrl!);
+                    var propertyInfo = typeof(UserModel).GetProperty(filter.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                    if (propertyInfo == null) continue;
+
+                    var parameter = Expression.Parameter(typeof(UserModel), "x");
+                    var property = Expression.Property(parameter, propertyInfo);
+
+                    object? typedValue;
+                    try
+                    {
+                        typedValue = Convert.ChangeType(filter.Value, propertyInfo.PropertyType);
+                    }
+                    catch
+                    {
+                        continue; // Skip this filter if conversion fails
+                    }
+
+                    var constant = Expression.Constant(typedValue);
+                    Expression condition;
+
+                    if (propertyInfo.PropertyType == typeof(string))
+                    {
+                        var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                        condition = Expression.Call(property, containsMethod!, constant);
+                    }
+                    else
+                    {
+                        condition = Expression.Equal(property, constant);
+                    }
+
+                    var lambda = Expression.Lambda<Func<UserModel, bool>>(condition, parameter);
+                    query = query.Where(lambda);
                 }
-                existingUser.ImageUrl = await _imagesHelper.UploadImageAsync(userModel.Image, "users");
             }
-            existingUser.UserName = userModel.UserName;
-            existingUser.Email = userModel.Email;
-            existingUser.PhoneNumber = userModel.PhoneNumber;
-            existingUser.ImageUrl = userModel.ImageUrl;
-            existingUser.Address = userModel.Address;
-            existingUser.City = userModel.City;
-            existingUser.Country = userModel.Country;
-            _context.Users.Update(existingUser);
-            await _context.SaveChangesAsync();
-            return existingUser;
+
+            // Apply sorting
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                var propertyInfo = typeof(UserModel).GetProperty(sortBy, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                if (propertyInfo != null)
+                {
+                    var parameter = Expression.Parameter(typeof(UserModel), "x");
+                    var property = Expression.Property(parameter, propertyInfo);
+                    var sortLambda = Expression.Lambda(property, parameter);
+
+                    string methodName = ascending ? "OrderBy" : "OrderByDescending";
+                    var method = typeof(Queryable).GetMethods()
+                        .First(m => m.Name == methodName && m.GetParameters().Length == 2)
+                        .MakeGenericMethod(typeof(UserModel), propertyInfo.PropertyType);
+
+                    query = (IQueryable<UserModel>)method.Invoke(null, new object[] { query, sortLambda })!;
+                }
+            }
+
+            // Apply pagination
+            query = query.Skip((page.Value - 1) * limit.Value).Take(limit.Value);
+
+            return await query.ToListAsync();
         }
     }
 }

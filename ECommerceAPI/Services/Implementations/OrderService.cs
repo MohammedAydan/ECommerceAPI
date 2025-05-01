@@ -19,45 +19,33 @@ namespace ECommerceAPI.Services.Implementations
             _mapper = mapper;
         }
 
-        public async Task<IEnumerable<OrderDTO>> GetAllOrdersAsync(int page = 1, int limit = 10)
+        public async Task<IEnumerable<OrderDTO>> GetAllOrdersAsync(int? page = 1, int? limit = 10, string? search = null, string? sortBy = "Id", bool ascending = true, Dictionary<string, string>? filters = null)
         {
-            var orders = await _orderRepository.GetAllOrdersAsync(page, limit);
+            var orders = await _orderRepository.GetAllOrdersAsync(page, limit, search, sortBy, ascending, filters);
             return _mapper.Map<IEnumerable<OrderDTO>>(orders);
         }
 
-        public async Task<IEnumerable<OrderDTO>> GetAllOrdersByUserIdAsync(string userId, int page = 1, int limit = 10) 
+        public async Task<IEnumerable<OrderDTO>> GetOrdersByUserIdAsync(string userId, int page = 1, int limit = 10)
         {
-            var orders = await _orderRepository.GetOrdersByUserIdAsync(userId,page,limit);
+            var orders = await _orderRepository.GetOrdersByUserIdAsync(userId, page, limit);
             return _mapper.Map<IEnumerable<OrderDTO>>(orders);
         }
 
-        public async Task<IEnumerable<OrderDTO>> GetAllOrdersByUserIdAsync(
-            string userId,
-            int page = 1,
-            int limit = 10,
-            bool getMyItemsAndProducts = false,
-            int pageItems = 1,
-            int limitItems = 10
-            )
+        public async Task<IEnumerable<OrderDTO>> GetOrdersWithItemsAsync(string userId, int page = 1, int limit = 10, bool includeProducts = false, int pageItems = 1, int limitItems = 10)
         {
-            var orders = await _orderRepository.GetOrdersWithItemsAsync(userId, page, limit, getMyItemsAndProducts, pageItems, limitItems);
+            var orders = await _orderRepository.GetOrdersWithItemsAsync(userId, page, limit, includeProducts, pageItems, limitItems);
             return _mapper.Map<IEnumerable<OrderDTO>>(orders);
         }
 
-        public async Task<OrderDTO> GetOrderByIdAsync(string id, bool getMyItemsAndProducts = false, int page = 1, int limit = 10)
+        public async Task<OrderDTO> GetOrderByIdAsync(string id, bool includeProducts = false, int page = 1, int limit = 10)
         {
-            var order = await _orderRepository.GetOrderByIdAsync(id, getMyItemsAndProducts, page, limit);
-            return _mapper.Map<OrderDTO>(order, opt => opt.AfterMap((src, dest) =>
-            {
-                // Custom logic for mapping OrderItems
-                dest.OrderItems = _mapper.Map<List<OrderItemDTO>>(dest.OrderItems);
-            }));
+            var order = await _orderRepository.GetOrderByIdAsync(id, includeProducts, page, limit);
+            return _mapper.Map<OrderDTO>(order);
         }
 
-
-        public async Task<Order> GetOrderByInvoiceIdAsync(string id)
+        public async Task<Order> GetOrderByInvoiceIdAsync(string invoiceId)
         {
-            return await _orderRepository.GetOrderByInvoiceIdAsync(id);
+            return await _orderRepository.GetOrderByInvoiceIdAsync(invoiceId);
         }
 
         public async Task<Order> CreateOrderAsync(OrderDTO orderDTO)
@@ -66,14 +54,9 @@ namespace ECommerceAPI.Services.Implementations
             return await _orderRepository.CreateOrderAsync(order);
         }
 
-        public async Task UpdateOrderAsync(Order order)
+        public async Task UpdateOrderAsync(OrderDTO orderDTO)
         {
-            await _orderRepository.UpdateOrderAsync(order);
-        }
-
-        public async Task UpdateOrderAsync(OrderDTO orderDto)
-        {
-            var order = _mapper.Map<Order>(orderDto);
+            var order = _mapper.Map<Order>(orderDTO);
             await _orderRepository.UpdateOrderAsync(order);
         }
 

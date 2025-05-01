@@ -11,5 +11,8 @@ namespace ECommerceAPI.Repositories.Interfaces
         Task<IEnumerable<string>> GetUserRolesAsync(UserModel user);
         Task<AuthResponseDto> RefreshToken(string refreshToken);
         Task<UserModel?> UpdateUserAsync(UserModel userModel);
+
+        // get all users 
+        Task<IEnumerable<UserModel>> GetAllUsersAsync(int? page = 1, int? limit = 10, string? search = null, string? sortBy = "Id", bool ascending = true, Dictionary<string, string>? filters = null);
     }
 }

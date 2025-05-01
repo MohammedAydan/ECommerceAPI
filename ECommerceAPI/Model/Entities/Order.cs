@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ECommerceAPI.Helpers;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -9,7 +10,7 @@ namespace ECommerceAPI.Model.Entities
     {
         [Key]
         //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } = NumberGeneratorHelper.GenerateNumber();
         [Required]
         public string UserId { get; set; }
         [Required]
@@ -17,6 +18,7 @@ namespace ECommerceAPI.Model.Entities
         public decimal TotalAmount { get; set; }
         public string? ShippingAddress { get; set; } = string.Empty;
         public string Status { get; set; } = "Pending";
+        public decimal? ShippingPrice { get; set; } = 0;
         public string PaymentMethod { get; set; }
         public List<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 

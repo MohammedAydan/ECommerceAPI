@@ -20,9 +20,15 @@ namespace ECommerceAPI.Services.Implementations
             _mapper = mapper;
         }
 
-        public async Task<IEnumerable<CategoryDTO>> GetAllCategoriesAsync(int? page = 1, int? limit = 10)
+        public async Task<IEnumerable<CategoryDTO>> GetAllCategoriesAsync(
+            int? page = 1,
+            int? limit = 10,
+            string? search = null,
+            string? sortBy = "Id",
+            bool ascending = true,
+            Dictionary<string, string>? filters = null)
         {
-            var categories = await _categoryRepository.GetAllCategoriesAsync(page, limit);
+            var categories = await _categoryRepository.GetAllCategoriesAsync(page, limit, search, sortBy, ascending, filters);
             return _mapper.Map<IEnumerable<CategoryDTO>>(categories);
         }
 
@@ -53,6 +59,12 @@ namespace ECommerceAPI.Services.Implementations
         {
             var categories = await _categoryRepository.GetTopCategoriesAsync(page, limit);
             return _mapper.Map<IEnumerable<CategoryDTO>>(categories);
+        }
+
+        public async Task<IEnumerable<SimpleCategory>> GetSimpleCategoriesAsync(int? page = 1, int? limit = 10)
+        {
+            var categories = await _categoryRepository.GetSimpleCategoriesAsync(page, limit);
+            return _mapper.Map<IEnumerable<SimpleCategory>>(categories);
         }
     }
 }

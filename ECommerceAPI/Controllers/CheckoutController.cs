@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using ECommerceAPI.EmailTemplates;
 using ECommerceAPI.Model.DTOs;
+using ECommerceAPI.Model.Entities;
 using ECommerceAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,15 +17,18 @@ namespace ECommerceAPI.Controllers
         private readonly ICartService _cartService;
         private readonly IOrderService _orderService;
         private readonly IMapper _mapper;
+        private readonly IEmailService _emailService;
 
         public CheckoutController(
             IOrderService orderService,
             ICartService cartService,
-            IMapper mapper)
+            IMapper mapper,
+            IEmailService emailService)
         {
             _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
             _cartService = cartService ?? throw new ArgumentNullException(nameof(cartService));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _emailService = emailService;
         }
 
         [HttpPost]
@@ -48,6 +53,7 @@ namespace ECommerceAPI.Controllers
                     UserId = userId,
                     PaymentMethod = request.PaymentMethod ?? "CashOnDelivery",
                     ShippingAddress = request.ShippingAddress,
+                    ShippingPrice = request.ShippingPrice,
                     OrderItems = _mapper.Map<List<OrderItemDTO>>(cart.CartItems),
                     Status = "Pending"
                 };
@@ -62,6 +68,31 @@ namespace ECommerceAPI.Controllers
                 if (cart.CartId != null)
                 {
                     await _cartService.DeleteCartAsync(cart.CartId.Value);
+                }
+
+                // Send confirmation email
+                OrderConfirmationTemplate orderConfirmationTemplate = new OrderConfirmationTemplate(
+                    order.User?.UserName ?? "",
+                    order.Id.ToString(),
+                    order.CreatedAt.ToString(),
+                    order.ShippingAddress ?? "",
+                    order.TotalAmount.ToString("F2"),
+                    order.PaymentMethod,
+                    GetOrderUrl(order.Id.ToString())
+                    );
+
+                var emailSubject = orderConfirmationTemplate.Subject;
+                var emailTo = order.User?.Email;
+
+                if (!string.IsNullOrEmpty(emailTo))
+                {
+                    await _emailService.SendEmail(
+                        new EmailMessage(
+                            new[] { emailTo },
+                            emailSubject,
+                            orderConfirmationTemplate.Body
+                            )
+                        );
                 }
 
                 return Ok(new
@@ -83,11 +114,17 @@ namespace ECommerceAPI.Controllers
                 });
             }
         }
+
+        private string GetOrderUrl(string orderId)
+        {
+            return $"https://ecommerce-app-rho-peach.vercel.app/orders/{orderId}";
+        }
     }
 
     public class CheckoutRequestDTO
     {
         public string? PaymentMethod { get; set; }
         public string ShippingAddress { get; set; } = string.Empty;
+        public decimal ShippingPrice { get; set; }
     }
 }

@@ -23,9 +23,10 @@ namespace ECommerceAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductDTO>>> GetProducts(
             [FromQuery] int? page = 1,
-            [FromQuery] int? limit = 10)
+            [FromQuery] int? limit = 10,
+            string? search = null, string? sortBy = "Id", bool ascending = true, Dictionary<string, string>? filters = null)
         {
-            var products = await _productService.GetAllProductsAsync(page, limit);
+            var products = await _productService.GetAllProductsAsync(page, limit, search, sortBy, ascending, filters);
             return Ok(products);
         }
 
@@ -86,6 +87,21 @@ namespace ECommerceAPI.Controllers
         {
             await _productService.DeleteProductAsync(id);
             return NoContent();
+        }
+
+        [AllowAnonymous]
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<ProductDTO>>> SearchProducts(
+                [FromQuery] string searchTerm,
+                [FromQuery] int? page = 1,
+                [FromQuery] int? limit = 10,
+                [FromQuery] int? categoryId = null,
+                [FromQuery] decimal? minPrice = null,
+                [FromQuery] decimal? maxPrice = null
+            )
+        {
+            var products = await _productService.GetProductsBySearchTermAsync(searchTerm, page, limit, categoryId, minPrice, maxPrice);
+            return Ok(products);
         }
     }
 }

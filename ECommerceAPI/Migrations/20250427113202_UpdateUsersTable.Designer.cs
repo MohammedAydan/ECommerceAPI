@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ECommerceAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250424124301_Update1233")]
-    partial class Update1233
+    [Migration("20250427113202_UpdateUsersTable")]
+    partial class UpdateUsersTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -110,7 +110,6 @@ namespace ECommerceAPI.Migrations
             modelBuilder.Entity("ECommerceAPI.Model.Entities.Order", b =>
                 {
                     b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -131,6 +130,12 @@ namespace ECommerceAPI.Migrations
 
                     b.Property<string>("ReferenceNumber")
                         .HasColumnType("longtext");
+
+                    b.Property<string>("ShippingAddress")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal?>("ShippingPrice")
+                        .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -188,11 +193,17 @@ namespace ECommerceAPI.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ProductId"));
 
+                    b.Property<int?>("CartAddedCount")
+                        .HasColumnType("int");
+
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("CreatedOrderCount")
+                        .HasColumnType("int");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -320,6 +331,9 @@ namespace ECommerceAPI.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
@@ -330,14 +344,14 @@ namespace ECommerceAPI.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime?>("LastSignIn")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<int>("MyProperty")
-                        .HasColumnType("int");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -361,6 +375,9 @@ namespace ECommerceAPI.Migrations
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)

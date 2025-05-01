@@ -101,13 +101,14 @@ namespace ECommerceAPI.Migrations
 
                     b.HasIndex("CategoryId1");
 
+                    b.HasIndex("CategoryName");
+
                     b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("ECommerceAPI.Model.Entities.Order", b =>
                 {
                     b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -132,6 +133,9 @@ namespace ECommerceAPI.Migrations
                     b.Property<string>("ShippingAddress")
                         .HasColumnType("longtext");
 
+                    b.Property<decimal?>("ShippingPrice")
+                        .HasColumnType("decimal(65,30)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -148,7 +152,13 @@ namespace ECommerceAPI.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("TotalAmount");
+
                     b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "CreatedAt");
 
                     b.ToTable("Orders");
                 });
@@ -236,6 +246,14 @@ namespace ECommerceAPI.Migrations
                     b.HasKey("ProductId");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Price");
+
+                    b.HasIndex("ProductName");
+
+                    b.HasIndex("ProductName", "CategoryId");
 
                     b.ToTable("Products");
                 });
@@ -326,6 +344,9 @@ namespace ECommerceAPI.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
@@ -335,6 +356,9 @@ namespace ECommerceAPI.Migrations
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("LastSignIn")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("tinyint(1)");
@@ -365,11 +389,21 @@ namespace ECommerceAPI.Migrations
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("varchar(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("LastSignIn");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");

@@ -1,12 +1,12 @@
-﻿using AutoMapper;
+﻿// ... all using directives ...
+
+using AutoMapper;
 using ECommerceAPI.Model.DTOs;
+using ECommerceAPI.Model.Params;
 using ECommerceAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace ECommerceAPI.Controllers
 {
@@ -28,157 +28,81 @@ namespace ECommerceAPI.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetOrders([FromQuery] int page = 1, [FromQuery] int limit = 10)
+        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetAllOrders([FromQuery] int page = 1, [FromQuery] int limit = 10, string? search = null, string? sortBy = "Id", bool ascending = true, Dictionary<string, string>? filters = null)
         {
-            try
-            {
-                var orders = await _orderService.GetAllOrdersAsync(page, limit);
-                return Ok(orders);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"An error occurred while retrieving orders: {ex.Message}");
-            }
+            var orders = await _orderService.GetAllOrdersAsync(page, limit, search, sortBy, ascending, filters);
+            return Ok(orders);
         }
 
         [HttpGet("user")]
-        public async Task<IActionResult> GetAllOrdersByUserIdAsync([FromQuery] int page = 1,[FromQuery] int limit = 10)
+        public async Task<IActionResult> GetOrdersByUser([FromQuery] int page = 1, [FromQuery] int limit = 10)
         {
-            try
-            {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized("User not authenticated or not authorized.");
-                }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("User not authenticated.");
 
-                var orders = await _orderService.GetAllOrdersByUserIdAsync(userId, page, limit);
-                if (orders == null || orders.IsNullOrEmpty())
-                {
-                    return NotFound("No orders found for the user.");
-                }
-
-                return Ok(orders);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"An error occurred while retrieving user orders: {ex.Message}");
-            }
+            var orders = await _orderService.GetOrdersByUserIdAsync(userId, page, limit);
+            return Ok(orders);
         }
 
-        [HttpGet("user/getItems")]
-        public async Task<IActionResult> GetAllOrdersByUserIdAsync([FromQuery] int page = 1, [FromQuery] int limit = 10, [FromQuery] int pageItems = 1, [FromQuery] int limitItems = 10)
+        [HttpGet("user/with-items")]
+        public async Task<IActionResult> GetOrdersWithItems([FromQuery] int page = 1, [FromQuery] int limit = 10, [FromQuery] int pageItems = 1, [FromQuery] int limitItems = 10)
         {
-            try
-            {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized("User not authenticated or not authorized.");
-                }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("User not authenticated.");
 
-                var orders = await _orderService.GetAllOrdersByUserIdAsync(userId, page, limit, true, pageItems, limitItems);
-                if (orders == null || orders.IsNullOrEmpty())
-                {
-                    return NotFound("No orders found for the user.");
-                }
-
-                return Ok(orders);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"An error occurred while retrieving user orders: {ex.Message}");
-            }
+            var orders = await _orderService.GetOrdersWithItemsAsync(userId, page, limit, true, pageItems, limitItems);
+            return Ok(orders);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<OrderDTO>> GetOrder(
-            string id,
-            [FromQuery] bool getMyItemsAndProducts = false,
-            [FromQuery] int page = 1,
-            [FromQuery] int limit = 10)
+        public async Task<ActionResult<OrderDTO>> GetOrder(string id, [FromQuery] bool includeProducts = false, [FromQuery] int page = 1, [FromQuery] int limit = 10)
         {
-            try
-            {
-                var order = await _orderService.GetOrderByIdAsync(id, getMyItemsAndProducts, page, limit);
-                if (order == null)
-                {
-                    return NotFound("Order not found.");
-                }
-                return Ok(order);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"An error occurred while retrieving the order: {ex.Message}");
-            }
+            var order = await _orderService.GetOrderByIdAsync(id, includeProducts, page, limit);
+            if (order == null)
+                return NotFound("Order not found.");
+
+            return Ok(order);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateOrder([FromBody] string paymentMethod)
+        public async Task<IActionResult> CreateOrder([FromBody] CheckoutParams checkoutParams)
         {
-            try
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("User not authorized.");
+
+            var cart = await _cartService.GetCartByUserIdAsync(userId);
+
+            var orderDTO = new OrderDTO
             {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if(userId == null)
-                {
-                    return Unauthorized("User not authorized");
-                }
+                UserId = userId,
+                PaymentMethod = checkoutParams.paymentMethod,
+                ShippingAddress = checkoutParams.ShippingAddress,
+                ShippingPrice = checkoutParams.ShippingPrice,
+                OrderItems = _mapper.Map<IEnumerable<OrderItemDTO>>(cart.CartItems).ToList()
+            };
 
-                OrderDTO orderDTO = new OrderDTO();
-                orderDTO.UserId = userId;
-                orderDTO.PaymentMethod = paymentMethod;
-
-                var cart = await _cartService.GetCartByUserIdAsync(userId);
-                orderDTO.OrderItems = _mapper.Map<IEnumerable<OrderItemDTO>>(cart.CartItems).ToList();
-
-                var res = await _orderService.CreateOrderAsync(orderDTO);
-
-
-                return Ok(res);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"An error occurred while adding the order: {ex.Message}");
-            }
+            var result = await _orderService.CreateOrderAsync(orderDTO);
+            return Ok(result);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateOrder(string id, OrderDTO orderDTO)
+        public async Task<IActionResult> UpdateOrder(string id, [FromBody] OrderDTO orderDTO)
         {
-            try
-            {
-                if (id != orderDTO.Id)
-                {
-                    return BadRequest("Order ID mismatch.");
-                }
+            if (id != orderDTO.Id)
+                return BadRequest("Order ID mismatch.");
 
-                await _orderService.UpdateOrderAsync(orderDTO);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"An error occurred while updating the order: {ex.Message}");
-            }
+            await _orderService.UpdateOrderAsync(orderDTO);
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteOrder(string id)
         {
-            try
-            {
-                var order = await _orderService.GetOrderByIdAsync(id);
-                if (order == null)
-                {
-                    return NotFound("Order not found.");
-                }
-
-                await _orderService.DeleteOrderAsync(id);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"An error occurred while deleting the order: {ex.Message}");
-            }
+            await _orderService.DeleteOrderAsync(id);
+            return NoContent();
         }
     }
 }

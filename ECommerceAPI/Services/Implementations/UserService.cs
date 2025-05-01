@@ -1,4 +1,5 @@
-﻿using ECommerceAPI.Model.DTOs;
+﻿using AutoMapper;
+using ECommerceAPI.Model.DTOs;
 using ECommerceAPI.Model.Entities;
 using ECommerceAPI.Repositories.Interfaces;
 using ECommerceAPI.Services.Interfaces;
@@ -9,10 +10,12 @@ namespace ECommerceAPI.Services.Implementations
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IMapper mapper)
         {
             _userRepository = userRepository;
+            _mapper = mapper;
         }
 
         public async Task<UserDto?> GetUserByIdAsync(string id)
@@ -53,10 +56,19 @@ namespace ECommerceAPI.Services.Implementations
             return await _userRepository.RefreshToken(refreshToken);
         }
 
-        public async Task<UserModel?> UpdateUserAsync(UserModel userModel)
+        public async Task<UserDto?> UpdateUserAsync(string userId, UpdateUserDto updateUserDto)
         {
-            return await _userRepository.UpdateUserAsync(userModel);
+            var userModel = _mapper.Map<UserModel>(updateUserDto);
+            userModel.Id = userId;
+
+            var user =  await _userRepository.UpdateUserAsync(userModel);
+            return _mapper.Map<UserDto>(user);
         }
 
+        public async Task<IEnumerable<UserDto>> GetAllUsersAsync(int? page = 1, int? limit = 10, string? search = null, string? sortBy = "Id", bool ascending = true, Dictionary<string, string>? filters = null)
+        {
+            var users = await _userRepository.GetAllUsersAsync(page, limit, search, sortBy, ascending, filters);
+            return _mapper.Map<IEnumerable<UserDto>>(users);
+        }
     }
 }

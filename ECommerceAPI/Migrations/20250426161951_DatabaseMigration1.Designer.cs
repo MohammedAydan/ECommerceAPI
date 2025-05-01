@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ECommerceAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250424175418_updatedatabase1")]
-    partial class updatedatabase1
+    [Migration("20250426161951_DatabaseMigration1")]
+    partial class DatabaseMigration1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -110,7 +110,6 @@ namespace ECommerceAPI.Migrations
             modelBuilder.Entity("ECommerceAPI.Model.Entities.Order", b =>
                 {
                     b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -131,6 +130,12 @@ namespace ECommerceAPI.Migrations
 
                     b.Property<string>("ReferenceNumber")
                         .HasColumnType("longtext");
+
+                    b.Property<string>("ShippingAddress")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal?>("ShippingPrice")
+                        .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -341,9 +346,6 @@ namespace ECommerceAPI.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<int>("MyProperty")
-                        .HasColumnType("int");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
