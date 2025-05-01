@@ -1,7 +1,5 @@
 # E-Commerce API Documentation
 
-A comprehensive RESTful API built with .NET 8 for managing an e-commerce platform.
-
 ## Table of Contents
 - [Overview](#overview)
 - [Authentication](#authentication)
@@ -10,8 +8,10 @@ A comprehensive RESTful API built with .NET 8 for managing an e-commerce platfor
 - [Shopping Cart](#shopping-cart)
 - [Orders](#orders)
 - [Checkout](#checkout)
+- [Dashboard](#dashboard)
+- [User Management](#user-management)
 - [Error Handling](#error-handling)
-- [Pagination](#pagination)
+- [Pagination & Filtering](#pagination--filtering)
 - [Technical Stack](#technical-stack)
 - [Getting Started](#getting-started)
 
@@ -19,338 +19,230 @@ A comprehensive RESTful API built with .NET 8 for managing an e-commerce platfor
 
 This API provides a complete solution for e-commerce applications with the following features:
 
-- User Authentication & Authorization
-- Product Management
-- Category Management
-- Shopping Cart Operations
-- Order Processing
+- JWT Authentication with Refresh Tokens
+- Comprehensive Product Management
+- Category Hierarchy Support
+- Shopping Cart Functionality
+- Order Processing System
 - Checkout Flow
+- Admin Dashboard Statistics
+- User Profile Management
+- Advanced Search and Filtering
 - Pagination Support
-- Token-based Authentication with JWT
-- Refresh Token Mechanism
-- File Upload Support for Product and Category Images
+- File Upload Capabilities
 
 ## Authentication
 
-Authentication is handled using JWT (JSON Web Tokens) with a refresh token mechanism.
-
 ### Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/User/signUp` | Register new user |
-| POST | `/api/v1/User/signIn` | User login |
-| POST | `/api/v1/User/refresh-token` | Refresh authentication token |
-| GET | `/api/v1/User` | Get current user details |
-| PUT | `/api/v1/User/update` | Update user information |
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------|
+| POST | `/api/v1/User/signUp` | Register new user | Multipart form-data |
+| POST | `/api/v1/User/signIn` | User login | JSON: `{email, password}` |
+| POST | `/api/v1/User/refresh-token` | Refresh JWT token | JSON: `{refreshToken}` |
+| GET | `/api/v1/User` | Get current user details | - |
+| PUT | `/api/v1/User/update` | Update user information | Multipart form-data |
 
-### User Registration Model
+### User Registration (Multipart Form)
 
-```json
-{
-  "userName": "string",
-  "email": "user@example.com",
-  "country": "string",
-  "city": "string",
-  "address": "string",
-  "phoneNumber": "string",
-  "password": "password",
-  "confirmPassword": "password",
-  "image": "[binary file]"
-}
-```
-
-### Login Model
-
-```json
-{
-  "email": "user@example.com",
-  "password": "password"
-}
-```
-
-### Refresh Token Model
-
-```json
-{
-  "refreshToken": "your-refresh-token"
-}
-```
+Required fields:
+- UserName (string)
+- Email (valid email format)
+- Password (8-50 characters)
+- ConfirmPassword (must match Password)
+- Country (string)
+- City (string)
+- Address (string)
+- Image (binary file, optional)
 
 ### Authentication Header
 
-Include the JWT token in the Authorization header for all protected endpoints:
-
 ```
-Authorization: Bearer {your-token}
+Authorization: Bearer {your-jwt-token}
 ```
 
 ## Products
 
-Products represent the items available for purchase in the e-commerce platform.
-
 ### Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/Products` | List all products (paginated) |
-| GET | `/api/v1/Products/top` | Get top products (paginated) |
-| POST | `/api/v1/Products` | Create new product |
-| GET | `/api/v1/Products/{id}` | Get product details |
-| PUT | `/api/v1/Products/{id}` | Update product |
-| DELETE | `/api/v1/Products/{id}` | Delete product |
-| GET | `/api/v1/Products/category/{id}` | Get products by category |
+| Method | Endpoint | Description | Parameters |
+|--------|----------|-------------|------------|
+| GET | `/api/v1/Products` | List products | page, limit, search, sortBy, ascending |
+| GET | `/api/v1/Products/top` | Get top products | page, limit |
+| GET | `/api/v1/Products/category/{id}` | Products by category | id (string), page, limit |
+| GET | `/api/v1/Products/{id}` | Product details | id (integer) |
+| GET | `/api/v1/Products/search` | Search products | searchTerm, page, limit, categoryId, minPrice, maxPrice |
+| POST | `/api/v1/Products` | Create product | Multipart form |
+| PUT | `/api/v1/Products/{id}` | Update product | id (integer), Multipart form |
+| DELETE | `/api/v1/Products/{id}` | Delete product | id (integer) |
 
-### Product Model
+### Product Search Parameters
 
-```json
-{
-  "productId": 0,
-  "productName": "string",
-  "description": "string",
-  "price": 0.0,
-  "categoryId": 0,
-  "sku": "string",
-  "stockQuantity": 0,
-  "image": "[binary file]",
-  "imageUrl": "string",
-  "discount": 0,
-  "rating": 0,
-  "salePrice": 0.0,
-  "cartAddedCount": 0,
-  "createdOrderCount": 0,
-  "category": {
-    "categoryId": 0,
-    "categoryName": "string",
-    "description": "string",
-    "imageUrl": "string"
-  }
-}
-```
+- `searchTerm`: String to search in product names/descriptions
+- `categoryId`: Filter by category
+- `minPrice`/`maxPrice`: Price range filter
+- `page`/`limit`: Pagination controls
+- `sortBy`: Field to sort by (default: "Id")
+- `ascending`: Sort direction (default: true)
 
 ## Categories
 
-Categories are used to organize products into logical groups.
-
 ### Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/Categories` | List all categories (paginated) |
-| GET | `/api/v1/Categories/top` | Get top-level categories (paginated) |
-| POST | `/api/v1/Categories` | Create new category |
-| GET | `/api/v1/Categories/{id}` | Get category details |
-| PUT | `/api/v1/Categories/{id}` | Update category |
-| DELETE | `/api/v1/Categories/{id}` | Delete category |
-
-### Category Model
-
-```json
-{
-  "categoryId": 0,
-  "categoryName": "string",
-  "description": "string",
-  "image": "[binary file]",
-  "imageUrl": "string",
-  "products": [
-    {
-      "productId": 0,
-      "productName": "string",
-      "description": "string",
-      "price": 0.0,
-      "categoryId": 0,
-      "sku": "string",
-      "stockQuantity": 0,
-      "imageUrl": "string"
-    }
-  ],
-  "itemsCount": 0
-}
-```
-
-### Retrieving Category with Products
-
-To include products when retrieving a category, add the `getMyProducts` parameter:
-
-```
-GET /api/v1/Categories/1?getMyProducts=true
-```
+| Method | Endpoint | Description | Parameters |
+|--------|----------|-------------|------------|
+| GET | `/api/v1/Categories` | List categories | page, limit, search, sortBy, ascending |
+| GET | `/api/v1/Categories/top` | Top categories | page, limit |
+| GET | `/api/v1/Categories/simple` | Simplified category list | page, limit |
+| GET | `/api/v1/Categories/{id}` | Category details | id (integer), getMyProducts, page, limit |
+| POST | `/api/v1/Categories` | Create category | Multipart form |
+| PUT | `/api/v1/Categories/{id}` | Update category | id (integer), Multipart form |
+| DELETE | `/api/v1/Categories/{id}` | Delete category | id (integer) |
 
 ## Shopping Cart
 
-The shopping cart allows users to collect products before proceeding to checkout.
-
 ### Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/Carts` | Get current user's cart |
-| POST | `/api/v1/Carts/add` | Add product to cart |
-| DELETE | `/api/v1/Carts/remove` | Remove product from cart |
-| DELETE | `/api/v1/Carts/{cartId}` | Delete entire cart |
-
-### Cart Model
-
-```json
-{
-  "cartId": 0,
-  "userId": "string",
-  "cartItems": [
-    {
-      "cartItemId": 0,
-      "productId": 0,
-      "quantity": 0,
-      "product": {
-        "productId": 0,
-        "productName": "string",
-        "price": 0.0,
-        "imageUrl": "string"
-        // other product properties
-      }
-    }
-  ]
-}
-```
-
-### Adding Product to Cart
-
-```
-POST /api/v1/Carts/add
-Content-Type: application/json
-
-{productId}
-```
-
-### Removing Product from Cart
-
-```
-DELETE /api/v1/Carts/remove
-Content-Type: application/json
-
-{productId}
-```
-
-To remove all items from cart:
-
-```
-DELETE /api/v1/Carts/remove?removeAll=true
-```
+| Method | Endpoint | Description | Parameters/Request |
+|--------|----------|-------------|---------------------|
+| GET | `/api/v1/Carts` | Get user's cart | - |
+| POST | `/api/v1/Carts/add` | Add to cart | JSON: productId (integer) |
+| DELETE | `/api/v1/Carts/remove` | Remove from cart | JSON: productId (integer), Query: removeAll (boolean) |
+| DELETE | `/api/v1/Carts/{cartId}` | Delete cart | cartId (integer) |
 
 ## Orders
 
-Orders represent completed purchases by users.
-
 ### Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/Orders` | List all orders (admin) or user orders (paginated) |
-| POST | `/api/v1/Orders` | Create new order |
-| GET | `/api/v1/Orders/{id}` | Get order details |
-| PUT | `/api/v1/Orders/{id}` | Update order |
-| DELETE | `/api/v1/Orders/{id}` | Delete order |
-| GET | `/api/v1/Orders/user` | Get current user's orders |
-| GET | `/api/v1/Orders/user/getItems` | Get current user's order items |
-
-### Order Model
-
-```json
-{
-  "id": "string",
-  "userId": "string",
-  "totalAmount": 0.0,
-  "orderItems": [
-    {
-      "id": "string",
-      "orderId": "string",
-      "productId": 0,
-      "quantity": 0,
-      "price": 0.0,
-      "product": {
-        // product details
-      }
-    }
-  ],
-  "paymentMethod": "string",
-  "shippingAddress": "string",
-  "status": "string",
-  "createdAt": "2024-04-03T00:00:00Z",
-  "updatedAt": "2024-04-03T00:00:00Z"
-}
-```
-
-### Get Order with Items and Products
-
-To include order items and their associated products when retrieving an order:
-
-```
-GET /api/v1/Orders/{id}?getMyItemsAndProducts=true
-```
+| Method | Endpoint | Description | Parameters |
+|--------|----------|-------------|------------|
+| GET | `/api/v1/Orders` | List orders | page, limit, search, sortBy, ascending |
+| GET | `/api/v1/Orders/user` | User orders | page, limit |
+| GET | `/api/v1/Orders/user/with-items` | Orders with items | page, limit, pageItems, limitItems |
+| GET | `/api/v1/Orders/{id}` | Order details | id (string), includeProducts, page, limit |
+| POST | `/api/v1/Orders` | Create order | JSON: CheckoutParams |
+| PUT | `/api/v1/Orders/{id}` | Update order | id (string), JSON: OrderDTO |
+| DELETE | `/api/v1/Orders/{id}` | Delete order | id (string) |
 
 ## Checkout
 
-The checkout process finalizes the user's purchase.
+### Endpoint
+
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------|
+| POST | `/api/v1/Checkout` | Process checkout | JSON: CheckoutRequestDTO |
+
+### Checkout Models
+
+**CheckoutRequestDTO:**
+```json
+{
+  "paymentMethod": "string",
+  "shippingAddress": "string",
+  "shippingPrice": 0.0
+}
+```
+
+**CheckoutParams:**
+```json
+{
+  "paymentMethod": "string",
+  "shippingAddress": "string",
+  "shippingPrice": 0.0
+}
+```
+
+## Dashboard
 
 ### Endpoint
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/v1/Checkout` | Process checkout |
+| GET | `/api/v1/Dashboard/stats` | Get dashboard statistics |
 
-### Checkout Request Model
-
+**DashboardStats Model:**
 ```json
 {
-  "paymentMethod": "string",
-  "shippingAddress": "string"
+  "totalRevenue": 0.0,
+  "totalOrders": 0,
+  "totalProducts": 0,
+  "activeUsers": 0,
+  "revenueGrowth": 0.0,
+  "ordersGrowth": 0,
+  "productsGrowth": 0,
+  "usersGrowth": 0
 }
 ```
 
+## User Management
+
+### Endpoints
+
+| Method | Endpoint | Description | Parameters |
+|--------|----------|-------------|------------|
+| GET | `/api/v1/User/all` | List all users | page, limit, search, sortBy, ascending |
+
 ## Error Handling
 
-The API returns appropriate HTTP status codes:
+Standard HTTP status codes are used with JSON error responses:
 
-- `200 OK` - Request succeeded
-- `400 Bad Request` - Invalid input
-- `401 Unauthorized` - Authentication failed
-- `403 Forbidden` - Authorization failed
-- `404 Not Found` - Resource not found
-- `500 Internal Server Error` - Server error
+- `200 OK`: Successful request
+- `400 Bad Request`: Invalid input/data
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: Resource not found
+- `500 Internal Server Error`: Server error
 
-## Pagination
+## Pagination & Filtering
 
-Most list endpoints support pagination with the following query parameters:
+Most list endpoints support:
 
-- `page`: Page number (default: 1)
+**Pagination:**
+- `page`: Current page (default: 1)
 - `limit`: Items per page (default: 10)
 
-Example:
-```
-GET /api/v1/Products?page=2&limit=25
-```
+**Filtering/Sorting:**
+- `search`: Text search filter
+- `sortBy`: Field to sort by (default varies)
+- `ascending`: Sort direction (default: true)
+
+**Nested Pagination:**
+Some endpoints support nested pagination for related items:
+- `pageItems`: Page number for nested items
+- `limitItems`: Items per page for nested items
 
 ## Technical Stack
 
 - .NET 8
-- RESTful Architecture
+- RESTful API Design
 - JWT Authentication
 - Entity Framework Core
-- Swagger API Documentation
+- Swagger/OpenAPI 3.0
+- Multipart File Uploads
+- Pagination & Filtering
+- Clean Architecture
 
 ## Getting Started
 
-1. Clone the repository
-2. Configure your database connection in `appsettings.json`
-3. Run database migrations: `dotnet ef database update`
-4. Run the application: `dotnet run`
-5. Access Swagger documentation at: `https://localhost:5001/swagger`
+1. Ensure .NET 8 SDK is installed
+2. Configure database connection strings
+3. Set JWT secret key in configuration
+4. Run database migrations
+5. Launch application
+6. Access Swagger UI at `/swagger`
 
-## Additional Notes
+## File Uploads
 
-### File Uploads
+For endpoints requiring file uploads (products/categories/users):
+- Use `multipart/form-data` content type
+- File fields are marked as `format: binary`
+- Other fields should be sent as form fields
 
-For endpoints that accept file uploads (such as product and category creation/updates), use `multipart/form-data` as the content type.
+## Security
 
-### Security
+All endpoints (except auth-related) require JWT authentication via:
+```
+Authorization: Bearer {token}
+```
 
-This API uses JWT authentication. All protected endpoints require a valid JWT token in the Authorization header.
+Refresh tokens can be used to obtain new access tokens when they expire.
